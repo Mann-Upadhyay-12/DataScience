@@ -1,0 +1,17 @@
+stage,dataset,rows_in,rows_out,rule
+dedupe,dam_spp_hubs,149472,149472,"keep last pull per (hour, hub)"
+gaps,dam_spp_hubs,24912,24912,"0 missing hours flagged as NaN, prices are never interpolated"
+leak-drop,load_forecast_asof,24912,24912,drop rows published after the D-1 09:45 US-Central cutoff
+dedupe,load_forecast_asof,24912,24912,one row per target hour: latest publication before the cutoff
+columns,load_forecast_asof,9,9,dropped mostly-empty columns: []
+align,load_forecast_asof,24912,24906,aligned to the hourly UTC grid; gaps stay NaN (no interpolation)
+leak-drop,wind_forecast_asof,24912,24912,drop rows published after the D-1 09:45 US-Central cutoff
+dedupe,wind_forecast_asof,24912,24912,one row per target hour: latest publication before the cutoff
+columns,wind_forecast_asof,18,18,dropped mostly-empty columns: []
+align,wind_forecast_asof,24912,24906,aligned to the hourly UTC grid; gaps stay NaN (no interpolation)
+leak-drop,solar_forecast_asof,24912,24912,drop rows published after the D-1 09:45 US-Central cutoff
+dedupe,solar_forecast_asof,24912,24912,one row per target hour: latest publication before the cutoff
+columns,solar_forecast_asof,21,21,dropped mostly-empty columns: []
+align,solar_forecast_asof,24912,24906,aligned to the hourly UTC grid; gaps stay NaN (no interpolation)
+actuals,fuel_mix+load,24912,24861,actual generation/load used only at lag >= 2 days
+weather,weather_fcst,24912,24444,30 columns; leads=[2]; forecasts valid from 2024-01-20 12:00:00+00:00; NaN before that is kept

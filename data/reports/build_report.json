@@ -1,0 +1,31 @@
+{
+  "rows": 24912,
+  "first": "2024-01-01 00:00:00+00:00",
+  "last": "2026-11-03 23:00:00+00:00",
+  "feature_columns": 96,
+  "target_hubs": [
+    "dam_HB_BUSAVG",
+    "dam_HB_HOUSTON",
+    "dam_HB_NORTH",
+    "dam_HB_PAN",
+    "dam_HB_SOUTH",
+    "dam_HB_WEST"
+  ],
+  "nan_share_by_feature_group": {
+    "cal_": 0.0,
+    "lf_": 0.0002,
+    "wind_": 0.0002,
+    "solar_": 0.0003,
+    "nl_": 0.0003,
+    "wx_": 0.0268,
+    "actlag2d_": 0.002
+  },
+  "tests": {
+    "load_forecast_asof_published_after_cutoff": 0,
+    "wind_forecast_asof_published_after_cutoff": 0,
+    "solar_forecast_asof_published_after_cutoff": 0,
+    "T2_unlisted_feature_columns": [],
+    "T4_actual_columns_in_features": [],
+    "T3_lag_spotcheck_passed_of_5": 5
+  }
+}

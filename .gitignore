@@ -1,0 +1,22 @@
+# Environment & secrets
+.env
+*.env
+*.key
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.ipynb_checkpoints/
+
+# Raw ERCOT DuckDB database & Parquet raw cache
+data/ercot.duckdb
+data/raw/
+data/processed/*.parquet
+data/results/*.parquet
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

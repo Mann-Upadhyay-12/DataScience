@@ -1,0 +1,31 @@
+step,dataset,rows_in,rows_out,rule
+raw_rows,dam_spp_hubs,149472,149472,as downloaded
+drop_exact_duplicates,dam_spp_hubs,149472,149472,"keys=['interval_start_utc', 'location']"
+flag_missing_intervals,dam_spp_hubs,149472,149472,gaps listed in gaps_dam_spp_hubs.csv; never interpolate prices
+raw_rows,rt_spp_15min_primary,99644,99644,as downloaded
+drop_exact_duplicates,rt_spp_15min_primary,99644,99644,"keys=['interval_start_utc', 'location']"
+flag_missing_intervals,rt_spp_15min_primary,99644,99644,gaps listed in gaps_rt_spp_15min_primary.csv; never interpolate prices
+raw_rows,load_system_hourly,24912,24912,as downloaded
+drop_exact_duplicates,load_system_hourly,24912,24912,keys=['interval_start_utc']
+flag_missing_intervals,load_system_hourly,24912,24912,gaps listed in gaps_load_system_hourly.csv; never interpolate prices
+raw_rows,load_weather_zones,24912,24912,as downloaded
+drop_exact_duplicates,load_weather_zones,24912,24912,keys=['interval_start_utc']
+flag_missing_intervals,load_weather_zones,24912,24912,gaps listed in gaps_load_weather_zones.csv; never interpolate prices
+raw_rows,fuel_mix_hourly,24912,24912,as downloaded
+drop_exact_duplicates,fuel_mix_hourly,24912,24912,keys=['interval_start_utc']
+flag_missing_intervals,fuel_mix_hourly,24912,24912,gaps listed in gaps_fuel_mix_hourly.csv; never interpolate prices
+raw_rows,load_forecast_asof,24912,24912,as downloaded
+drop_exact_duplicates,load_forecast_asof,24912,24912,"keys=['interval_start_utc', 'publish_time_utc']"
+flag_missing_intervals,load_forecast_asof,24912,24912,gaps listed in gaps_load_forecast_asof.csv; never interpolate prices
+raw_rows,wind_forecast_asof,24912,24912,as downloaded
+drop_exact_duplicates,wind_forecast_asof,24912,24912,"keys=['interval_start_utc', 'publish_time_utc']"
+flag_missing_intervals,wind_forecast_asof,24912,24912,gaps listed in gaps_wind_forecast_asof.csv; never interpolate prices
+raw_rows,solar_forecast_asof,24912,24912,as downloaded
+drop_exact_duplicates,solar_forecast_asof,24912,24912,"keys=['interval_start_utc', 'publish_time_utc']"
+flag_missing_intervals,solar_forecast_asof,24912,24912,gaps listed in gaps_solar_forecast_asof.csv; never interpolate prices
+raw_rows,wind_actual_latest,24909,24909,as downloaded
+drop_exact_duplicates,wind_actual_latest,24909,24909,"keys=['interval_start_utc', 'publish_time_utc']"
+flag_missing_intervals,wind_actual_latest,24909,24909,gaps listed in gaps_wind_actual_latest.csv; never interpolate prices
+raw_rows,solar_actual_latest,24909,24909,as downloaded
+drop_exact_duplicates,solar_actual_latest,24909,24909,"keys=['interval_start_utc', 'publish_time_utc']"
+flag_missing_intervals,solar_actual_latest,24909,24909,gaps listed in gaps_solar_actual_latest.csv; never interpolate prices

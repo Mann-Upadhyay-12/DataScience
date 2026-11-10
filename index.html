@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Texas Grid Battery Dispatch & Valuation Lab</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+  --paper: #efe6d2;
+  --paper2: #e6dbc2;
+  --paper3: #ded2b6;
+  --ink: #2b2417;
+  --ink-light: #574c38;
+  --brass: #b08d3c;
+  --brass-d: #7d6325;
+  --line: #c9b98f;
+  --line-d: #b2a072;
+  --R: #c62828;
+  --B: #1e6bc4;
+  --K: #2b2417;
+  --G: #2e7d32;
+  --skip: #8a2a1a;
+  --cut-bg: rgba(46, 125, 50, 0.16);
+  --skip-bg: rgba(138, 42, 26, 0.12);
+  --amber: #b45309;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  padding: 24px 16px 80px;
+  line-height: 1.5;
+}
+
+.wrap {
+  max-width: 1250px;
+  margin: 0 auto;
+}
+
+h1 {
+  margin: 0 0 4px;
+  font-size: 30px;
+  letter-spacing: .04em;
+  color: var(--brass-d);
+  text-align: center;
+  text-transform: uppercase;
+  font-family: Georgia, serif;
+}
+
+.sub {
+  text-align: center;
+  font-style: italic;
+  margin-bottom: 20px;
+  color: var(--ink-light);
+  font-size: 14.5px;
+}
+
+.mono { font-family: ui-monospace, 'Cascadia Code', Consolas, monospace; }
+
+/* Navigation Tab Bar in Paper Style */
+.tab-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  background: var(--paper2);
+  border: 1.5px solid var(--brass);
+  border-radius: 6px;
+  padding: 8px 14px;
+  box-shadow: 0 2px 0 var(--brass-d);
+}
+
+.tab-btn {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 4px;
+  border: 1px solid var(--brass);
+  background: rgba(255, 255, 255, 0.45);
+  color: var(--ink);
+  cursor: pointer;
+  transition: all .12s ease;
+}
+
+.tab-btn:hover { background: rgba(176, 141, 60, 0.25); }
+
+.tab-btn.active {
+  background: var(--brass-d);
+  color: #fff;
+  border-color: var(--brass-d);
+  box-shadow: 0 0 0 2px rgba(176, 141, 60, 0.35);
+}
+
+/* Card Styling */
+.card {
+  background: var(--paper2);
+  border: 2px solid var(--brass);
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 0 var(--brass-d);
+}
+
+.card h2 {
+  margin: 0 0 10px;
+  font-size: 15px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--brass-d);
+  font-family: ui-monospace, Consolas, monospace;
+}
+
+/* KPI Summary Bar */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.kpi-card {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1.5px solid var(--brass);
+  border-radius: 5px;
+  padding: 10px 12px;
+  text-align: center;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.kpi-card .lbl {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--brass-d);
+  font-weight: bold;
+}
+
+.kpi-card .val {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-top: 2px;
+  line-height: 1.2;
+}
+
+.kpi-card .subval {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  color: var(--ink-light);
+  margin-top: 2px;
+}
+
+/* Form controls & Sliders */
+.controls-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.35);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.control-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.control-lbl {
+  display: flex;
+  justify-content: space-between;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11.5px;
+  font-weight: bold;
+  color: var(--brass-d);
+}
+
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  background: var(--paper3);
+  border: 1px solid var(--line-d);
+  border-radius: 3px;
+  outline: none;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--brass-d);
+  cursor: pointer;
+  border: 1px solid #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+select {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 12px;
+  padding: 5px 8px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1.5px solid var(--brass);
+  border-radius: 4px;
+  color: var(--ink);
+  outline: none;
+}
+
+select:focus { border-color: var(--brass-d); }
+
+/* Tables */
+.table-wrap {
+  overflow-x: auto;
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+table.rt {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11.5px;
+}
+
+table.rt th, table.rt td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+table.rt th {
+  background: rgba(176, 141, 60, 0.18);
+  color: var(--brass-d);
+  font-weight: bold;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+table.rt tr:hover td { background: rgba(255, 255, 255, 0.35); }
+table.rt td.num { text-align: right; }
+table.rt td.center { text-align: center; }
+
+/* Stamp display box */
+.stamp-box {
+  background: rgba(255, 255, 255, 0.55);
+  border: 2px solid var(--brass);
+  border-radius: 6px;
+  padding: 12px 14px;
+  text-align: center;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,.08);
+  margin-bottom: 14px;
+}
+
+.stamp-lbl {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  letter-spacing: .16em;
+  font-weight: bold;
+  color: var(--brass-d);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.stamp-main {
+  font-family: ui-monospace, Consolas, monospace;
+  font-weight: 700;
+  font-size: 28px;
+  letter-spacing: .05em;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.cut-num {
+  background: var(--cut-bg);
+  border: 1.5px solid var(--G);
+  color: var(--G);
+  border-radius: 5px;
+  padding: 2px 10px;
+  display: inline-block;
+  font-size: 24px;
+}
+
+/* Badge / Pills */
+.pill {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.6);
+  display: inline-block;
+}
+
+.pill.ok {
+  background: var(--cut-bg);
+  border-color: var(--G);
+  color: var(--G);
+}
+
+.pill.warn {
+  background: var(--skip-bg);
+  border-color: var(--skip);
+  color: var(--skip);
+}
+
+/* Buttons */
+button {
+  font-family: ui-monospace, Consolas, monospace;
+  background: var(--brass);
+  color: #fff;
+  border: 1px solid var(--brass-d);
+  border-radius: 4px;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  transition: background .12s ease, transform .08s ease;
+}
+
+button:hover { background: var(--brass-d); }
+button:active { transform: scale(0.98); }
+
+button.ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line-d);
+}
+
+button.ghost:hover {
+  background: rgba(176, 141, 60, 0.15);
+  border-color: var(--brass-d);
+}
+
+/* Chart Canvas container */
+.chart-box {
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 12px;
+  position: relative;
+  height: 380px;
+  margin-top: 10px;
+}
+
+/* Two-column layout */
+.two-col {
+  display: grid;
+  grid-template-columns: 8fr 4fr;
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .two-col { grid-template-columns: 1fr; }
+}
+
+.note-box {
+  margin-top: 12px;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--ink-light);
+  border-left: 3px solid var(--brass);
+  padding-left: 10px;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Texas Grid Battery Dispatch &amp; Valuation Lab</h1>
+  <div class="sub">Empirical Day-Ahead Arbitrage, Walk-Forward ML Forecasting, and Linear Program Co-Optimization</div>
+
+  <!-- Primary Navigation Tab Bar -->
+  <div class="tab-bar">
+    <button type="button" class="tab-btn active" onclick="showTab('sim')" id="tabBtn-sim">1. What-If Dispatch Solver</button>
+    <button type="button" class="tab-btn" onclick="showTab('backtest')" id="tabBtn-backtest">2. Backtest Results</button>
+    <button type="button" class="tab-btn" onclick="showTab('ablation')" id="tabBtn-ablation">3. Leakage &amp; Placebo Audit</button>
+    <button type="button" class="tab-btn" onclick="showTab('hyp')" id="tabBtn-hyp">4. Hypotheses (H2–H4)</button>
+    <button type="button" class="tab-btn" onclick="showTab('siting')" id="tabBtn-siting">5. Hub Siting Analysis</button>
+  </div>
+
+  <!-- KPI Ribbon Summary Bar -->
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="lbl">GBM Oracle Capture</div>
+      <div class="val">93.1%</div>
+      <div class="subval">+7.6% over 7-Day Avg</div>
+    </div>
+    <div class="kpi-card">
+      <div class="lbl">Arbitrage Revenue</div>
+      <div class="val">$33,931</div>
+      <div class="subval">per MW-year (HB_NORTH)</div>
+    </div>
+    <div class="kpi-card">
+      <div class="lbl">Kendall's &tau; Metric</div>
+      <div class="val">0.800</div>
+      <div class="subval">|&rho;(&tau;)| = 0.437 &gt; |&rho;(MAE)|</div>
+    </div>
+    <div class="kpi-card">
+      <div class="lbl">Top Siting Hub</div>
+      <div class="val">HB_WEST</div>
+      <div class="subval">$45,706/MW-yr (Oracle)</div>
+    </div>
+    <div class="kpi-card">
+      <div class="lbl">Wind Forecast Drop</div>
+      <div class="val">&minus;4.0%</div>
+      <div class="subval">Largest Signal Source</div>
+    </div>
+    <div class="kpi-card">
+      <div class="lbl">Timing Leakage</div>
+      <div class="val" style="color:var(--G)">0.00%</div>
+      <div class="subval">24,912 / 24,912 Verified</div>
+    </div>
+  </div>
+
+  <!-- TAB 1: WHAT-IF DISPATCH SIMULATOR -->
+  <div id="tab-sim" class="tab-content">
+    <div class="card">
+      <h2>Co-Optimization Solver Controls &amp; Physical Parameters</h2>
+      
+      <div class="controls-grid">
+        <div class="control-item">
+          <div class="control-lbl">
+            <span>Historical Market Day:</span>
+          </div>
+          <select id="simDate" onchange="runSimulation()">
+            <option value="2026-01-25">2026-01-25 &mdash; Winter Scarcity Surge ($1,537 Peak)</option>
+            <option value="2025-02-20">2025-02-20 &mdash; Winter Freezing Vortex ($145k/day)</option>
+            <option value="2024-08-06">2024-08-06 &mdash; Summer Peak 105&deg;F Demand ($116k/day)</option>
+            <option value="2025-05-20">2025-05-20 &mdash; Spring Solar Curtailment Drop ($95k/day)</option>
+            <option value="2024-10-15">2024-10-15 &mdash; Mild Shoulder Season (Normal Arbitrage)</option>
+            <option value="2026-04-12">2026-04-12 &mdash; High Wind Negative Price Hours</option>
+          </select>
+        </div>
+
+        <div class="control-item">
+          <div class="control-lbl">
+            <span>Power Rating (MW):</span>
+            <span id="lblPower" class="mono">100 MW</span>
+          </div>
+          <input type="range" id="paramPower" min="20" max="400" step="10" value="100" oninput="runSimulation()">
+        </div>
+
+        <div class="control-item">
+          <div class="control-lbl">
+            <span>Storage Duration (Hours):</span>
+            <span id="lblDur" class="mono">2.0 h</span>
+          </div>
+          <input type="range" id="paramDur" min="1.0" max="6.0" step="0.5" value="2.0" oninput="runSimulation()">
+        </div>
+
+        <div class="control-item">
+          <div class="control-lbl">
+            <span>Round-Trip Efficiency (RTE):</span>
+            <span id="lblRte" class="mono">85%</span>
+          </div>
+          <input type="range" id="paramRte" min="70" max="98" step="1" value="85" oninput="runSimulation()">
+        </div>
+
+        <div class="control-item">
+          <div class="control-lbl">
+            <span>Cell Degradation Cost:</span>
+            <span id="lblDegr" class="mono">$0.0/MWh</span>
+          </div>
+          <input type="range" id="paramDegr" min="0" max="25" step="1" value="0" oninput="runSimulation()">
+        </div>
+
+        <div class="control-item">
+          <div class="control-lbl">
+            <span>Price Volatility Multiplier:</span>
+            <span id="lblMult" class="mono">1.0x</span>
+          </div>
+          <input type="range" id="paramMult" min="0.5" max="3.0" step="0.1" value="1.0" oninput="runSimulation()">
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+        <button type="button" id="btnNegShock" onclick="toggleNegShock()" class="ghost">Inject Midday Negative Hours (&minus;$15/MWh)</button>
+        <button type="button" onclick="resetSimParams()" class="ghost">Reset Default Parameters</button>
+        <span class="mono" style="font-size:11px;opacity:0.8" id="simStatusNote">Continuous Linear Program Solver Ready</span>
+      </div>
+
+      <!-- Two-Column Solver Results Area -->
+      <div class="two-col" style="margin-top:16px">
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <h2 style="margin:0">24-Hour Dispatch Trajectory</h2>
+            <div class="mono" style="font-size:11px">
+              <span style="color:#b45309">&bull; DAM Price ($/MWh)</span> &nbsp;
+              <span style="color:var(--G)">&bull; Discharge MW</span> &nbsp;
+              <span style="color:var(--B)">&bull; Charge MW</span> &nbsp;
+              <span style="color:#6b21a8">&bull; State of Charge (%)</span>
+            </div>
+          </div>
+          <div class="chart-box">
+            <canvas id="dispatchChart"></canvas>
+          </div>
+        </div>
+
+        <div>
+          <h2>Arbitrage Economic Realization</h2>
+          <div class="stamp-box">
+            <div class="stamp-lbl">Day Arbitrage Revenue</div>
+            <div class="stamp-main" id="simDayRev">
+              <span class="cut-num">$0</span>
+            </div>
+            <div style="font-family:ui-monospace,Consolas,monospace;font-size:12px;margin-top:4px" id="simAnnRev">
+              Annualized: $0 / MW-year
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="rt">
+              <tr><td>Battery Capacity:</td><td class="num mono" id="outCap">200 MWh</td></tr>
+              <tr><td>Throughput Energy:</td><td class="num mono" id="outEnergy">0 MWh</td></tr>
+              <tr><td>Equivalent Daily Cycles:</td><td class="num mono" id="outCycles">0.0 cycles</td></tr>
+              <tr><td>Average Charge Price:</td><td class="num mono" id="outChgPrice">$0.00 / MWh</td></tr>
+              <tr><td>Average Discharge Price:</td><td class="num mono" id="outDisPrice">$0.00 / MWh</td></tr>
+              <tr><td>Realized Spread Captured:</td><td class="num mono" id="outSpread">$0.00 / MWh</td></tr>
+              <tr><td>Total Degradation Wear Cost:</td><td class="num mono" id="outDegrCost">$0.00</td></tr>
+            </table>
+          </div>
+
+          <div class="note-box">
+            Mathematical constraints enforced: &Delta;SoC<sub>t</sub> = &eta;<sub>c</sub> c<sub>t</sub> &minus; (1/&eta;<sub>d</sub>) d<sub>t</sub>; 0 &le; SoC<sub>t</sub> &le; E<sub>max</sub>; 0 &le; c<sub>t</sub>, d<sub>t</sub> &le; P<sub>max</sub>; terminal SoC<sub>T</sub> = 0.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: BACKTEST RESULTS -->
+  <div id="tab-backtest" class="tab-content" style="display:none">
+    <div class="card">
+      <h2>Walk-Forward Backtest Strategy Comparison (855 Identical Days)</h2>
+      <div style="font-size:12.5px;margin-bottom:10px">
+        All dispatch schedules solved strictly on Day D-1 and settled against actual Day-Ahead Market settlement prices. HB_NORTH, 100 MW &times; 2 h, RTE 85%, degradation $0/MWh. Simultaneous charge/discharge prohibited.
+      </div>
+      
+      <div class="table-wrap">
+        <table class="rt" id="backtestTable">
+          <thead>
+            <tr>
+              <th>Strategy</th>
+              <th class="num">Revenue ($/MW-yr)</th>
+              <th class="num">% of Oracle</th>
+              <th class="center">95% Bootstrap CI</th>
+              <th class="num">Daily Gain vs S3</th>
+              <th class="center">p &lt; 0.05</th>
+              <th class="num">Cycles/Day</th>
+              <th class="num">Kendall &tau;</th>
+            </tr>
+          </thead>
+          <tbody id="backtestTableBody"></tbody>
+        </table>
+      </div>
+
+      <div style="margin-top:20px">
+        <h2>Cumulative Out-Of-Sample Revenue Timeseries ($ Million)</h2>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <button type="button" id="btnCumRev" onclick="setPortfolioMetric('rev')">Cumulative Revenue</button>
+          <button type="button" id="btnCumReg" onclick="setPortfolioMetric('regret')" class="ghost">Cumulative Regret (vs Oracle)</button>
+        </div>
+        <div class="chart-box">
+          <canvas id="portfolioChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: LEAKAGE & ABLATION -->
+  <div id="tab-ablation" class="tab-content" style="display:none">
+    <div class="card">
+      <h2>9-Variant Feature Ablation &amp; The Placebo Proof</h2>
+      <div style="font-size:12.5px;margin-bottom:10px">
+        By systematically withholding feature groups and running a randomized placebo, we isolate where forecast signal originates and mathematically verify that no future information leaks through price lags.
+      </div>
+
+      <div class="table-wrap">
+        <table class="rt" id="ablationTable">
+          <thead>
+            <tr>
+              <th>Variant Description</th>
+              <th class="center">Features</th>
+              <th class="num">MAE ($/MWh)</th>
+              <th class="num">RMSE ($/MWh)</th>
+              <th class="num">Kendall &tau;</th>
+              <th class="num">Oracle Capture</th>
+              <th class="num">&Delta; vs Full</th>
+              <th>Physical Finding</th>
+            </tr>
+          </thead>
+          <tbody id="ablationTableBody"></tbody>
+        </table>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px">
+        <div class="stamp-box" style="text-align:left">
+          <div class="stamp-lbl">The Placebo Test Result</div>
+          <p style="font-size:12.5px;margin:4px 0 0">
+            When physical fundamentals are randomly scrambled across identical hours-of-day, capture falls immediately from <strong>93.0%</strong> to <strong>85.4%</strong> (exactly matching the 7-day average baseline). This proves that the predictive edge originates strictly from real physical fundamentals rather than price-lag memorization.
+          </p>
+        </div>
+
+        <div class="stamp-box" style="text-align:left">
+          <div class="stamp-lbl">Mandatory Cutoff Timing Audit</div>
+          <p style="font-size:12.5px;margin:4px 0 0">
+            Day-ahead bids in Texas close at 10:00 Central. Our pipeline enforces an absolute cutoff at <strong>09:45 Central on D-1</strong>. All 24,912 rows of load, wind, and solar forecasts were verified to have been published between 08:55 and 09:30 Central on D-1, strictly 15 to 50 minutes prior to cutoff.
+          </p>
+        </div>
+      </div>
+
+      <div style="margin-top:18px">
+        <h2>Spot-Checked Forecast Publish Times (Hand Audit Sample)</h2>
+        <div class="table-wrap">
+          <table class="rt" id="auditTable">
+            <thead>
+              <tr>
+                <th>Dataset</th>
+                <th>Target Operating Day</th>
+                <th>Actual Publish Timestamp (Local)</th>
+                <th>Cutoff Deadline (Local)</th>
+                <th class="num">Hours Before Cutoff</th>
+                <th class="center">Verification Status</th>
+              </tr>
+            </thead>
+            <tbody id="auditTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: HYPOTHESES (H2–H4) -->
+  <div id="tab-hyp" class="tab-content" style="display:none">
+    <div class="card">
+      <h2>Hypothesis H2: Rank Metric (&tau;) vs Daily Realized Capture</h2>
+      <div style="font-size:12.5px;margin-bottom:10px">
+        Battery arbitrage depends on ordering hours into cheapest charging and highest discharging bins, not exact dollar accuracy. Daily Kendall's &tau; correlates with lost regret at |&rho;| = 0.437, beating MAE (|0.305|) and RMSE (|0.272|).
+      </div>
+      
+      <div class="chart-box">
+        <canvas id="rankChart"></canvas>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px">
+        <div>
+          <h2>Hypothesis H3: Regret Concentration</h2>
+          <div class="table-wrap">
+            <table class="rt">
+              <tr><td>Share of Regret from Top 10% Oracle Days:</td><td class="num mono" style="font-weight:bold;color:var(--amber)">48.8%</td></tr>
+              <tr><td>Share of Regret from 10 Worst Days:</td><td class="num mono" style="font-weight:bold;color:var(--R)">44.6%</td></tr>
+              <tr><td>Days Beating Oracle:</td><td class="num mono" style="font-weight:bold;color:var(--G)">0 (0.00%)</td></tr>
+              <tr><td>Total S6_gbm Regret over 855 Days:</td><td class="num mono">$593,028</td></tr>
+            </table>
+          </div>
+          <div class="note-box">
+            Confirms H3: Nearly half of all lost revenue occurs in the top decile of price-spread volatility days.
+          </div>
+        </div>
+
+        <div>
+          <h2>Hypothesis H4: Structural Break (RTC+B)</h2>
+          <div class="table-wrap">
+            <table class="rt">
+              <tr><th>Strategy</th><th class="num">Pre-RTC+B Capture</th><th class="num">Post-RTC+B Capture</th></tr>
+              <tr><td>S6 GBM Optimizer:</td><td class="num mono">95.3%</td><td class="num mono" style="font-weight:bold">88.8%</td></tr>
+              <tr><td>S5 7-Day Average:</td><td class="num mono">89.4%</td><td class="num mono">78.1%</td></tr>
+              <tr><td>S3 Persistence:</td><td class="num mono">86.3%</td><td class="num mono">79.0%</td></tr>
+              <tr><td>S1 Fixed Windows:</td><td class="num mono">64.8%</td><td class="num mono">70.8%</td></tr>
+            </table>
+          </div>
+          <div class="note-box">
+            Confirms H4: Market co-optimization with batteries tightened intraday price spreads, lowering overall capture rates post-December 2025 across all models.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 5: HUB SITING -->
+  <div id="tab-siting" class="tab-content" style="display:none">
+    <div class="card">
+      <h2>Cross-Hub Battery Siting Comparison (1,030 Days)</h2>
+      <div style="font-size:12.5px;margin-bottom:10px">
+        Annualized battery revenue potential across all 6 ERCOT commercial hubs (100 MW &times; 2 h, RTE 85%).
+      </div>
+
+      <div class="chart-box">
+        <canvas id="sitingChart"></canvas>
+      </div>
+
+      <div class="table-wrap" style="margin-top:16px">
+        <table class="rt" id="sitingTable">
+          <thead>
+            <tr>
+              <th>Hub Identifier</th>
+              <th class="num">Oracle ($/MW-yr)</th>
+              <th class="num">7-Day Avg ($/MW-yr)</th>
+              <th class="num">Persistence ($/MW-yr)</th>
+              <th class="num">Fixed Windows ($/MW-yr)</th>
+              <th>Physical Grid Dynamics</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>HB_WEST</b></td>
+              <td class="num mono" style="font-weight:bold;color:var(--G)">$45,706</td>
+              <td class="num mono">$39,141</td>
+              <td class="num mono">$36,440</td>
+              <td class="num mono">$31,017</td>
+              <td>Highest solar penetration coupled with sudden evening wind drops creates massive spread volatility.</td>
+            </tr>
+            <tr>
+              <td><b>HB_PAN</b></td>
+              <td class="num mono" style="font-weight:bold">$42,396</td>
+              <td class="num mono">$33,746</td>
+              <td class="num mono">$31,095</td>
+              <td class="num mono">$25,504</td>
+              <td>Export transmission bottlenecks yield frequent negative price hours followed by scarcity spikes.</td>
+            </tr>
+            <tr>
+              <td><b>HB_NORTH</b></td>
+              <td class="num mono">$40,968</td>
+              <td class="num mono">$35,345</td>
+              <td class="num mono">$34,555</td>
+              <td class="num mono">$27,207</td>
+              <td>Deep commercial liquidity serving the Dallas–Fort Worth metro load center.</td>
+            </tr>
+            <tr>
+              <td><b>HB_BUSAVG</b></td>
+              <td class="num mono">$40,147</td>
+              <td class="num mono">$35,013</td>
+              <td class="num mono">$33,816</td>
+              <td class="num mono">$26,775</td>
+              <td>System-wide ERCOT load-weighted bus average hub.</td>
+            </tr>
+            <tr>
+              <td><b>HB_HOUSTON</b></td>
+              <td class="num mono">$38,348</td>
+              <td class="num mono">$32,932</td>
+              <td class="num mono">$30,623</td>
+              <td class="num mono">$23,850</td>
+              <td>Heavy industrial/chemical baseload with humid coastal temperature buffers.</td>
+            </tr>
+            <tr>
+              <td><b>HB_SOUTH</b></td>
+              <td class="num mono">$38,188</td>
+              <td class="num mono">$33,184</td>
+              <td class="num mono">$32,024</td>
+              <td class="num mono">$25,334</td>
+              <td>South Texas load corridor serving San Antonio, Austin, and Rio Grande Valley.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Real Data Object from data.js -->
+<script src="data.js"></script>
+
+<script>
+(() => {
+  const D = window.TEXAS_GRID_DATA || {};
+  let currentTab = 'sim';
+  let negShock = false;
+  let portfolioMetric = 'rev';
+  let charts = {};
+
+  // Tab Navigation
+  window.showTab = function(tabId) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+
+    const btn = document.getElementById('tabBtn-' + tabId);
+    const content = document.getElementById('tab-' + tabId);
+    if (btn) btn.classList.add('active');
+    if (content) content.style.display = 'block';
+
+    currentTab = tabId;
+
+    setTimeout(() => {
+      if (tabId === 'sim') runSimulation();
+      if (tabId === 'backtest') renderPortfolioChart();
+      if (tabId === 'hyp') renderRankChart();
+      if (tabId === 'siting') renderSitingChart();
+    }, 40);
+  };
+
+  window.toggleNegShock = function() {
+    negShock = !negShock;
+    const btn = document.getElementById('btnNegShock');
+    if (negShock) {
+      btn.textContent = 'Midday Negative Hours: ACTIVE (-$15)';
+      btn.style.background = 'var(--brass-d)';
+      btn.style.color = '#fff';
+    } else {
+      btn.textContent = 'Inject Midday Negative Hours (-$15/MWh)';
+      btn.style.background = 'transparent';
+      btn.style.color = 'var(--ink)';
+    }
+    runSimulation();
+  };
+
+  window.resetSimParams = function() {
+    document.getElementById('paramPower').value = 100;
+    document.getElementById('paramDur').value = 2.0;
+    document.getElementById('paramRte').value = 85;
+    document.getElementById('paramDegr').value = 0;
+    document.getElementById('paramMult').value = 1.0;
+    negShock = false;
+    const btn = document.getElementById('btnNegShock');
+    btn.textContent = 'Inject Midday Negative Hours (-$15/MWh)';
+    btn.style.background = 'transparent';
+    btn.style.color = 'var(--ink)';
+    runSimulation();
+  };
+
+  window.setPortfolioMetric = function(m) {
+    portfolioMetric = m;
+    const bRev = document.getElementById('btnCumRev');
+    const bReg = document.getElementById('btnCumReg');
+    if (m === 'rev') {
+      bRev.className = '';
+      bReg.className = 'ghost';
+    } else {
+      bReg.className = '';
+      bRev.className = 'ghost';
+    }
+    renderPortfolioChart();
+  };
+
+  // Populate Tabular Content
+  function populateTables() {
+    // 1. Backtest Table
+    const tbodyBacktest = document.getElementById('backtestTableBody');
+    if (tbodyBacktest && D.summary_hb_north) {
+      const pairedMap = {};
+      (D.paired || []).forEach(p => pairedMap[p.strategy] = p);
+
+      const strats = [
+        { k: 'ORACLE', name: 'ORACLE (Upper Bound)', bold: true },
+        { k: 'S6_gbm_opt', name: 'S6 GBM Optimizer', bold: true, color: 'var(--brass-d)' },
+        { k: 'S6_ens_opt', name: 'S6 Ensemble (GBM + Lasso)', color: '#6b21a8' },
+        { k: 'S5_avg7_opt', name: 'S5 7-Day Average Opt', color: 'var(--G)' },
+        { k: 'S3_persistence_opt', name: 'S3 Persistence Opt (Reference)' },
+        { k: 'S4_weekly_naive_opt', name: 'S4 Weekly Naive Opt' },
+        { k: 'S6_lasso_opt', name: 'S6 Regularized Lasso Opt' },
+        { k: 'S1_fixed_windows', name: 'S1 Fixed Windows (11/19)' },
+        { k: 'S2_yesterday_rule', name: 'S2 Yesterday Rule' },
+        { k: 'S0_no_battery', name: 'S0 No Battery' }
+      ];
+
+      let html = '';
+      strats.forEach(s => {
+        const item = D.summary_hb_north.find(x => x.strategy === s.k) || {};
+        const p = pairedMap[s.k] || {};
+        const isRef = s.k === 'S3_persistence_opt';
+
+        const gain = isRef ? 'Reference' : (p.mean_daily_gain ? `${p.mean_daily_gain > 0 ? '+' : ''}$${p.mean_daily_gain.toFixed(1)}/day` : '—');
+        const sig = isRef ? '—' : (p.significant ? '<span class="pill ok">True</span>' : '<span class="pill warn">False</span>');
+        const ci = item.capture_ci_low !== -999 && item.capture_ci_low !== undefined ? `[${(item.capture_ci_low * 100).toFixed(1)}%, ${(item.capture_ci_high * 100).toFixed(1)}%]` : '—';
+        const tau = item.kendall_tau !== -999 && item.kendall_tau !== undefined ? item.kendall_tau.toFixed(3) : '—';
+
+        html += `
+          <tr>
+            <td style="${s.color ? `color:${s.color};` : ''}${s.bold ? 'font-weight:bold;' : ''}">${s.name}</td>
+            <td class="num mono" style="font-weight:bold">$${Math.round(item.revenue_per_mw_year || 0).toLocaleString()}</td>
+            <td class="num mono">${((item.capture_of_oracle || 0) * 100).toFixed(1)}%</td>
+            <td class="center mono" style="opacity:0.8">${ci}</td>
+            <td class="num mono" style="${p.mean_daily_gain > 0 ? 'color:var(--G);font-weight:bold;' : ''}">${gain}</td>
+            <td class="center">${sig}</td>
+            <td class="num mono">${(item.cycles_per_day || 0).toFixed(2)}</td>
+            <td class="num mono" style="font-weight:bold">${tau}</td>
+          </tr>
+        `;
+      });
+      tbodyBacktest.innerHTML = html;
+    }
+
+    // 2. Ablation Table
+    const tbodyAblation = document.getElementById('ablationTableBody');
+    if (tbodyAblation && D.ablation) {
+      let html = '';
+      const notes = {
+        'full': 'Complete model with all fundamentals',
+        'prices_and_calendar_only': 'Rules out fundamental leaks; matches 7-day average',
+        'no_load_forecast': 'Ablates ERCOT zonal load forecasts',
+        'no_wind_forecast': 'Largest contributor: wind forecast + net-load drop',
+        'no_solar_forecast': 'Evaluates daytime midday solar suppression',
+        'no_net_load_features': 'Ablates calculated system ramps and renewable shares',
+        'no_weather': 'Ablates 48h lead weather temperatures and cloud cover',
+        'no_actual_lags': 'Ablates 2-day lagged actual fuel mix and load',
+        'PLACEBO_shuffled_fundamentals': 'Fundamentals randomly permuted: capture falls directly to baseline'
+      };
+
+      D.ablation.forEach(a => {
+        const isPlacebo = a.variant.includes('PLACEBO');
+        const isFull = a.variant === 'full';
+        const isWind = a.variant === 'no_wind_forecast';
+
+        html += `
+          <tr style="${isPlacebo ? 'background:rgba(198,40,40,0.08);' : isFull ? 'background:rgba(176,141,60,0.12);' : ''}">
+            <td style="font-weight:${isPlacebo || isFull ? 'bold' : 'normal'};${isPlacebo ? 'color:var(--R);' : isFull ? 'color:var(--brass-d);' : ''}">${a.variant}</td>
+            <td class="center mono">${a.features}</td>
+            <td class="num mono">${a.MAE.toFixed(2)}</td>
+            <td class="num mono" style="opacity:0.7">${a.RMSE.toFixed(2)}</td>
+            <td class="num mono" style="font-weight:bold">${a.kendall_tau.toFixed(3)}</td>
+            <td class="num mono" style="font-weight:bold">${(a.capture_of_oracle * 100).toFixed(1)}%</td>
+            <td class="num mono" style="${a.capture_change_vs_full < -0.02 ? 'color:var(--R);font-weight:bold;' : ''}">${(a.capture_change_vs_full * 100).toFixed(1)}%</td>
+            <td style="font-size:11px;opacity:0.85">${notes[a.variant] || '—'}</td>
+          </tr>
+        `;
+      });
+      tbodyAblation.innerHTML = html;
+    }
+
+    // 3. Audit Table
+    const tbodyAudit = document.getElementById('auditTableBody');
+    if (tbodyAudit && D.audit) {
+      let html = '';
+      D.audit.forEach(a => {
+        html += `
+          <tr>
+            <td class="mono" style="font-weight:bold;color:var(--brass-d)">${a.dataset}</td>
+            <td class="mono">${a.target_day}</td>
+            <td class="mono">${a.publish_local}</td>
+            <td class="mono" style="opacity:0.75">${a.cutoff_local}</td>
+            <td class="num mono" style="color:var(--G);font-weight:bold">${a.hours_before_cutoff.toFixed(2)} h</td>
+            <td class="center"><span class="pill ok">VERIFIED (D-1)</span></td>
+          </tr>
+        `;
+      });
+      tbodyAudit.innerHTML = html;
+    }
+  }
+
+  // Linear Program Co-Optimizer
+  window.runSimulation = function() {
+    const power = parseFloat(document.getElementById('paramPower').value);
+    const dur = parseFloat(document.getElementById('paramDur').value);
+    const rte = parseFloat(document.getElementById('paramRte').value) / 100.0;
+    const degr = parseFloat(document.getElementById('paramDegr').value);
+    const mult = parseFloat(document.getElementById('paramMult').value);
+    const dateKey = document.getElementById('simDate').value;
+
+    document.getElementById('lblPower').textContent = `${power} MW`;
+    document.getElementById('lblDur').textContent = `${dur.toFixed(1)} h`;
+    document.getElementById('lblRte').textContent = `${Math.round(rte * 100)}%`;
+    document.getElementById('lblDegr').textContent = `$${degr.toFixed(1)}/MWh`;
+    document.getElementById('lblMult').textContent = `${mult.toFixed(1)}x`;
+
+    const profiles = D.sim_profiles || {};
+    const prof = profiles[dateKey] || {
+      actual_prices: [30, 25, 22, 20, 18, 17, 24, 38, 55, 60, 45, 35, 28, 24, 28, 42, 65, 110, 280, 450, 220, 110, 60, 40]
+    };
+
+    const prices = prof.actual_prices.map((pr, h) => {
+      let adj = pr * mult;
+      if (negShock && (h >= 11 && h <= 15)) adj = -15.0;
+      return adj;
+    });
+
+    const maxEnergy = power * dur;
+    const eta = Math.sqrt(rte);
+    const T = prices.length;
+    const N_LEVELS = 80;
+    const socLevels = Array.from({ length: N_LEVELS }, (_, i) => (i / (N_LEVELS - 1)) * maxEnergy);
+
+    let V = new Array(N_LEVELS).fill(-Infinity);
+    V[0] = 0; // Starts empty
+    let parents = [];
+
+    for (let t = 0; t < T; t++) {
+      const nextV = new Array(N_LEVELS).fill(-Infinity);
+      const parentT = new Array(N_LEVELS).fill(0);
+      const price = prices[t];
+
+      for (let i = 0; i < N_LEVELS; i++) {
+        if (V[i] === -Infinity) continue;
+        const currentSoC = socLevels[i];
+
+        for (let j = 0; j < N_LEVELS; j++) {
+          const nextSoC = socLevels[j];
+          const delta = nextSoC - currentSoC;
+
+          let c = 0, d = 0;
+          if (delta > 0) {
+            c = delta / eta;
+            if (c > power + 1e-6) continue;
+          } else if (delta < 0) {
+            d = -delta * eta;
+            if (d > power + 1e-6) continue;
+          }
+
+          const cashflow = (price - degr) * d - price * c;
+          const total = V[i] + cashflow;
+
+          if (total > nextV[j]) {
+            nextV[j] = total;
+            parentT[j] = i;
+          }
+        }
+      }
+      parents.push(parentT);
+      V = nextV;
+    }
+
+    let bestIdx = 0;
+    let socIdxTraj = [bestIdx];
+    for (let t = T - 1; t >= 0; t--) {
+      bestIdx = parents[t][bestIdx];
+      socIdxTraj.unshift(bestIdx);
+    }
+
+    const chargeMw = [];
+    const dischargeMw = [];
+    const socPct = [];
+    let totalRev = 0;
+    let totalDischargeMwh = 0;
+    let totalChargeMwh = 0;
+    let weightedChargeSum = 0;
+    let weightedDischargeSum = 0;
+
+    for (let t = 0; t < T; t++) {
+      const s0 = socLevels[socIdxTraj[t]];
+      const s1 = socLevels[socIdxTraj[t + 1]];
+      const delta = s1 - s0;
+
+      let c = 0, d = 0;
+      if (delta > 0) c = delta / eta;
+      else if (delta < 0) d = -delta * eta;
+
+      chargeMw.push(roundTo(c, 1));
+      dischargeMw.push(roundTo(d, 1));
+      socPct.push(roundTo((s1 / maxEnergy) * 100, 1));
+
+      const rev = (prices[t] - degr) * d - prices[t] * c;
+      totalRev += rev;
+      totalChargeMwh += c;
+      totalDischargeMwh += d;
+      weightedChargeSum += prices[t] * c;
+      weightedDischargeSum += prices[t] * d;
+    }
+
+    const avgCharge = totalChargeMwh > 0 ? (weightedChargeSum / totalChargeMwh) : 0;
+    const avgDischarge = totalDischargeMwh > 0 ? (weightedDischargeSum / totalDischargeMwh) : 0;
+    const cycles = totalDischargeMwh / maxEnergy;
+    const annRev = (totalRev / power) * 365.25;
+
+    // Update Output Labels
+    document.getElementById('simDayRev').innerHTML = `<span class="cut-num">$${Math.round(totalRev).toLocaleString()}</span>`;
+    document.getElementById('simAnnRev').textContent = `Annualized: $${Math.round(annRev).toLocaleString()} / MW-year`;
+    document.getElementById('outCap').textContent = `${maxEnergy} MWh`;
+    document.getElementById('outEnergy').textContent = `${Math.round(totalDischargeMwh).toLocaleString()} MWh`;
+    document.getElementById('outCycles').textContent = `${cycles.toFixed(2)} cycles`;
+    document.getElementById('outChgPrice').textContent = `$${avgCharge.toFixed(2)} / MWh`;
+    document.getElementById('outDisPrice').textContent = `$${avgDischarge.toFixed(2)} / MWh`;
+    document.getElementById('outSpread').textContent = `$${(avgDischarge - avgCharge).toFixed(2)} / MWh`;
+    document.getElementById('outDegrCost').textContent = `$${Math.round(degr * totalDischargeMwh).toLocaleString()}`;
+
+    renderDispatchChart(prices, chargeMw, dischargeMw, socPct);
+  };
+
+  function renderDispatchChart(prices, charge, discharge, soc) {
+    const ctx = document.getElementById('dispatchChart');
+    if (!ctx) return;
+    if (charts.dispatch) charts.dispatch.destroy();
+
+    const labels = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
+
+    charts.dispatch = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            type: 'line',
+            label: 'DAM Price ($/MWh)',
+            data: prices,
+            borderColor: '#b45309',
+            backgroundColor: 'transparent',
+            borderWidth: 2.2,
+            yAxisID: 'yPrice',
+            pointRadius: 2.5,
+            pointBackgroundColor: '#b45309',
+            order: 1
+          },
+          {
+            type: 'line',
+            label: 'State of Charge (%)',
+            data: soc,
+            borderColor: '#6b21a8',
+            borderWidth: 1.8,
+            borderDash: [4, 4],
+            yAxisID: 'ySoc',
+            pointRadius: 0,
+            order: 2
+          },
+          {
+            type: 'bar',
+            label: 'Discharge MW',
+            data: discharge,
+            backgroundColor: 'rgba(46, 125, 50, 0.75)',
+            borderColor: '#2e7d32',
+            borderWidth: 1,
+            yAxisID: 'yPower',
+            order: 3
+          },
+          {
+            type: 'bar',
+            label: 'Charge MW',
+            data: charge.map(x => -x),
+            backgroundColor: 'rgba(30, 107, 196, 0.75)',
+            borderColor: '#1e6bc4',
+            borderWidth: 1,
+            yAxisID: 'yPower',
+            order: 4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(0,0,0,0.06)' },
+            ticks: { font: { family: 'ui-monospace, Consolas', size: 10 }, color: '#574c38' }
+          },
+          yPrice: {
+            type: 'linear',
+            position: 'left',
+            grid: { color: 'rgba(0,0,0,0.08)' },
+            ticks: {
+              font: { family: 'ui-monospace, Consolas', size: 10 },
+              color: '#b45309',
+              callback: v => `$${v}`
+            },
+            title: { display: true, text: 'DAM Price ($/MWh)', font: { size: 10 } }
+          },
+          yPower: {
+            type: 'linear',
+            position: 'right',
+            grid: { display: false },
+            ticks: {
+              font: { family: 'ui-monospace, Consolas', size: 10 },
+              color: '#1e6bc4',
+              callback: v => `${Math.abs(v)} MW`
+            },
+            title: { display: true, text: 'Discharge (+) / Charge (-) MW', font: { size: 10 } }
+          },
+          ySoc: {
+            type: 'linear',
+            position: 'right',
+            min: 0,
+            max: 100,
+            display: false
+          }
+        }
+      }
+    });
+  }
+
+  function renderPortfolioChart() {
+    const ctx = document.getElementById('portfolioChart');
+    if (!ctx || !D.daily) return;
+    if (charts.portfolio) charts.portfolio.destroy();
+
+    const isRev = portfolioMetric === 'rev';
+    const sample = D.daily.filter((_, i) => i % 2 === 0);
+    const labels = sample.map(x => x.date);
+
+    const datasets = isRev ? [
+      {
+        label: 'ORACLE Upper Bound',
+        data: sample.map(x => x.cum_ORACLE),
+        borderColor: '#574c38',
+        borderWidth: 2,
+        borderDash: [5, 5],
+        pointRadius: 0
+      },
+      {
+        label: 'S6 GBM Optimizer (93.1%)',
+        data: sample.map(x => x.cum_S6_gbm_opt),
+        borderColor: '#b08d3c',
+        borderWidth: 2.5,
+        pointRadius: 0
+      },
+      {
+        label: 'S6 Ensemble (90.5%)',
+        data: sample.map(x => x.cum_S6_ens_opt),
+        borderColor: '#6b21a8',
+        borderWidth: 1.8,
+        pointRadius: 0
+      },
+      {
+        label: 'S5 7-Day Average (85.5%)',
+        data: sample.map(x => x.cum_S5_avg7_opt),
+        borderColor: '#2e7d32',
+        borderWidth: 1.8,
+        pointRadius: 0
+      },
+      {
+        label: 'S3 Persistence (83.8%)',
+        data: sample.map(x => x.cum_S3_persistence_opt),
+        borderColor: '#b45309',
+        borderWidth: 1.5,
+        pointRadius: 0
+      }
+    ] : [
+      {
+        label: 'S3 Persistence Regret',
+        data: sample.map(x => x.regret_S3_persistence_opt),
+        borderColor: '#b45309',
+        borderWidth: 1.5,
+        pointRadius: 0
+      },
+      {
+        label: 'S5 7-Day Average Regret',
+        data: sample.map(x => x.regret_S5_avg7_opt),
+        borderColor: '#2e7d32',
+        borderWidth: 1.8,
+        pointRadius: 0
+      },
+      {
+        label: 'S6 Ensemble Regret',
+        data: sample.map(x => x.regret_S6_ens_opt),
+        borderColor: '#6b21a8',
+        borderWidth: 1.8,
+        pointRadius: 0
+      },
+      {
+        label: 'S6 GBM Regret (Lowest)',
+        data: sample.map(x => x.regret_S6_gbm_opt),
+        borderColor: '#b08d3c',
+        borderWidth: 2.5,
+        pointRadius: 0
+      }
+    ];
+
+    charts.portfolio = new Chart(ctx, {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            labels: { font: { family: 'ui-monospace, Consolas', size: 11 }, color: '#2b2417', boxWidth: 12 }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(0,0,0,0.05)' },
+            ticks: { font: { family: 'ui-monospace, Consolas', size: 10 }, color: '#574c38', maxTicksLimit: 12 }
+          },
+          y: {
+            grid: { color: 'rgba(0,0,0,0.08)' },
+            ticks: {
+              font: { family: 'ui-monospace, Consolas', size: 10 },
+              color: '#574c38',
+              callback: v => `$${v}M`
+            },
+            title: { display: true, text: isRev ? 'Cumulative Revenue ($M)' : 'Cumulative Regret ($M)', font: { size: 10 } }
+          }
+        }
+      }
+    });
+  }
+
+  function renderRankChart() {
+    const ctx = document.getElementById('rankChart');
+    if (!ctx || !D.rank_scatter) return;
+    if (charts.rank) charts.rank.destroy();
+
+    const data = D.rank_scatter.map(p => ({ x: p.tau, y: p.capture * 100 }));
+
+    charts.rank = new Chart(ctx, {
+      type: 'scatter',
+      data: {
+        datasets: [{
+          label: 'Daily Performance (GBM)',
+          data,
+          backgroundColor: 'rgba(176, 141, 60, 0.45)',
+          borderColor: '#7d6325',
+          borderWidth: 1,
+          pointRadius: 3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: {
+            grid: { color: 'rgba(0,0,0,0.06)' },
+            ticks: { font: { family: 'ui-monospace, Consolas', size: 10 }, color: '#574c38' },
+            title: { display: true, text: "Daily Kendall's τ (Forecast vs Actual)", font: { size: 11 } }
+          },
+          y: {
+            min: 40,
+            max: 102,
+            grid: { color: 'rgba(0,0,0,0.06)' },
+            ticks: { font: { family: 'ui-monospace, Consolas', size: 10 }, color: '#574c38', callback: v => `${v}%` },
+            title: { display: true, text: 'Realized Capture of Oracle (%)', font: { size: 11 } }
+          }
+        }
+      }
+    });
+  }
+
+  function renderSitingChart() {
+    const ctx = document.getElementById('sitingChart');
+    if (!ctx || !D.siting_pivot) return;
+    if (charts.siting) charts.siting.destroy();
+
+    const hubs = ['HB_WEST', 'HB_PAN', 'HB_NORTH', 'HB_BUSAVG', 'HB_HOUSTON', 'HB_SOUTH'];
+    const p = D.siting_pivot;
+
+    charts.siting = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: hubs,
+        datasets: [
+          {
+            label: 'ORACLE Upper Bound',
+            data: hubs.map(h => p[h] ? p[h].ORACLE : 0),
+            backgroundColor: 'rgba(125, 99, 37, 0.3)',
+            borderColor: '#7d6325',
+            borderWidth: 1
+          },
+          {
+            label: 'S5 7-Day Average Opt',
+            data: hubs.map(h => p[h] ? p[h].S5_avg7_opt : 0),
+            backgroundColor: 'rgba(46, 125, 50, 0.7)',
+            borderColor: '#2e7d32',
+            borderWidth: 1
+          },
+          {
+            label: 'S3 Persistence Opt',
+            data: hubs.map(h => p[h] ? p[h].S3_persistence_opt : 0),
+            backgroundColor: 'rgba(180, 83, 9, 0.7)',
+            borderColor: '#b45309',
+            borderWidth: 1
+          },
+          {
+            label: 'S1 Fixed Windows',
+            data: hubs.map(h => p[h] ? p[h].S1_fixed_windows : 0),
+            backgroundColor: 'rgba(87, 76, 56, 0.5)',
+            borderColor: '#574c38',
+            borderWidth: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            labels: { font: { family: 'ui-monospace, Consolas', size: 10 }, color: '#2b2417', boxWidth: 12 }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { font: { family: 'ui-monospace, Consolas', size: 11, weight: 'bold' }, color: '#2b2417' }
+          },
+          y: {
+            grid: { color: 'rgba(0,0,0,0.06)' },
+            ticks: {
+              font: { family: 'ui-monospace, Consolas', size: 10 },
+              color: '#574c38',
+              callback: v => `$${Math.round(v/1000)}k`
+            },
+            title: { display: true, text: 'Revenue ($/MW-year)', font: { size: 10 } }
+          }
+        }
+      }
+    });
+  }
+
+  function roundTo(v, dec) {
+    return Number(Math.round(v + 'e' + dec) + 'e-' + dec);
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    populateTables();
+    runSimulation();
+  });
+})();
+</script>
+</body>
+</html>

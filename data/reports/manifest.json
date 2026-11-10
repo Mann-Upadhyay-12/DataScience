@@ -1,0 +1,470 @@
+{
+  "dam_spp_hubs": {
+    "dataset_id": "ercot_spp_day_ahead_hourly",
+    "rows": 149472,
+    "duplicate_rows_on_keys": 0,
+    "null_pct_top5": {},
+    "first_interval_utc": "2024-01-01 00:00:00+00:00",
+    "last_interval_utc": "2026-11-03 23:00:00+00:00",
+    "locations": [
+      "HB_BUSAVG",
+      "HB_HOUSTON",
+      "HB_NORTH",
+      "HB_PAN",
+      "HB_SOUTH",
+      "HB_WEST"
+    ],
+    "gaps": {
+      "HB_BUSAVG": {
+        "expected": 24912,
+        "present": 24912,
+        "missing": 0
+      },
+      "HB_HOUSTON": {
+        "expected": 24912,
+        "present": 24912,
+        "missing": 0
+      },
+      "HB_NORTH": {
+        "expected": 24912,
+        "present": 24912,
+        "missing": 0
+      },
+      "HB_PAN": {
+        "expected": 24912,
+        "present": 24912,
+        "missing": 0
+      },
+      "HB_SOUTH": {
+        "expected": 24912,
+        "present": 24912,
+        "missing": 0
+      },
+      "HB_WEST": {
+        "expected": 24912,
+        "present": 24912,
+        "missing": 0
+      }
+    },
+    "dst_days": {
+      "2024-03-10": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2024-11-03": {
+        "expected_hours": 25,
+        "min_rows_per_series": 25
+      },
+      "2025-03-09": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2025-11-02": {
+        "expected_hours": 25,
+        "min_rows_per_series": 25
+      },
+      "2026-03-08": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2026-11-01": {
+        "expected_hours": 25,
+        "min_rows_per_series": 25
+      }
+    }
+  },
+  "rt_spp_15min_primary": {
+    "dataset_id": "ercot_spp_real_time_15_min",
+    "rows": 99644,
+    "duplicate_rows_on_keys": 0,
+    "null_pct_top5": {},
+    "first_interval_utc": "2024-01-01 00:00:00+00:00",
+    "last_interval_utc": "2026-11-03 23:45:00+00:00",
+    "locations": [
+      "HB_NORTH"
+    ],
+    "gaps": {
+      "HB_NORTH": {
+        "expected": 99648,
+        "present": 99644,
+        "missing": 4
+      }
+    }
+  },
+  "load_system_hourly": {
+    "dataset_id": "ercot_load",
+    "rows": 24912,
+    "duplicate_rows_on_keys": 0,
+    "null_pct_top5": {},
+    "first_interval_utc": "2024-01-01 00:00:00+00:00",
+    "last_interval_utc": "2026-11-03 23:00:00+00:00",
+    "gaps": {
+      "all": {
+        "expected": 24912,
+        "present": 24912,
+        "missing": 0
+      }
+    },
+    "dst_days": {
+      "2024-03-10": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2024-11-03": {
+        "expected_hours": 25,
+        "min_rows_per_series": 25
+      },
+      "2025-03-09": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2025-11-02": {
+        "expected_hours": 25,
+        "min_rows_per_series": 25
+      },
+      "2026-03-08": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2026-11-01": {
+        "expected_hours": 25,
+        "min_rows_per_series": 25
+      }
+    }
+  },
+  "load_weather_zones": {
+    "dataset_id": "ercot_load_by_weather_zone",
+    "rows": 24912,
+    "duplicate_rows_on_keys": 0,
+    "null_pct_top5": {},
+    "first_interval_utc": "2024-01-01 00:00:00+00:00",
+    "last_interval_utc": "2026-11-03 23:00:00+00:00",
+    "gaps": {
+      "all": {
+        "expected": 24912,
+        "present": 24912,
+        "missing": 0
+      }
+    },
+    "dst_days": {
+      "2024-03-10": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2024-11-03": {
+        "expected_hours": 25,
+        "min_rows_per_series": 25
+      },
+      "2025-03-09": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2025-11-02": {
+        "expected_hours": 25,
+        "min_rows_per_series": 25
+      },
+      "2026-03-08": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2026-11-01": {
+        "expected_hours": 25,
+        "min_rows_per_series": 25
+      }
+    }
+  },
+  "fuel_mix_hourly": {
+    "dataset_id": "ercot_fuel_mix",
+    "rows": 24912,
+    "duplicate_rows_on_keys": 0,
+    "null_pct_top5": {},
+    "first_interval_utc": "2024-01-01 00:00:00+00:00",
+    "last_interval_utc": "2026-11-03 23:00:00+00:00",
+    "gaps": {
+      "all": {
+        "expected": 24912,
+        "present": 24912,
+        "missing": 0
+      }
+    },
+    "dst_days": {
+      "2024-03-10": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2024-11-03": {
+        "expected_hours": 25,
+        "min_rows_per_series": 25
+      },
+      "2025-03-09": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2025-11-02": {
+        "expected_hours": 25,
+        "min_rows_per_series": 25
+      },
+      "2026-03-08": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2026-11-01": {
+        "expected_hours": 25,
+        "min_rows_per_series": 25
+      }
+    }
+  },
+  "load_forecast_asof": {
+    "dataset_id": "ercot_load_forecast_by_weather_zone",
+    "rows": 24912,
+    "duplicate_rows_on_keys": 0,
+    "null_pct_top5": {},
+    "first_interval_utc": "2024-01-01 06:00:00+00:00",
+    "last_interval_utc": "2026-11-04 05:00:00+00:00",
+    "gaps": {
+      "all": {
+        "expected": 24912,
+        "present": 24912,
+        "missing": 0
+      }
+    },
+    "dst_days": {
+      "2024-03-10": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2024-11-03": {
+        "expected_hours": 25,
+        "min_rows_per_series": 25
+      },
+      "2025-03-09": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2025-11-02": {
+        "expected_hours": 25,
+        "min_rows_per_series": 25
+      },
+      "2026-03-08": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2026-11-01": {
+        "expected_hours": 25,
+        "min_rows_per_series": 25
+      }
+    },
+    "leakage_guard": {
+      "rows": 24912,
+      "rows_published_after_cutoff": 0,
+      "share_after_cutoff": 0.0,
+      "max_hours_late": 0.0,
+      "median_hours_before_cutoff": 0.25,
+      "min_hours_before_cutoff": 0.25
+    }
+  },
+  "wind_forecast_asof": {
+    "dataset_id": "ercot_wind_actual_and_forecast_by_geo_region_hourly",
+    "rows": 24912,
+    "duplicate_rows_on_keys": 0,
+    "null_pct_top5": {
+      "gen_system_wide": 100.0,
+      "hsl_system_wide": 100.0,
+      "gen_panhandle": 100.0,
+      "gen_coastal": 100.0,
+      "gen_south": 100.0
+    },
+    "first_interval_utc": "2024-01-01 06:00:00+00:00",
+    "last_interval_utc": "2026-11-04 05:00:00+00:00",
+    "gaps": {
+      "all": {
+        "expected": 24912,
+        "present": 24912,
+        "missing": 0
+      }
+    },
+    "dst_days": {
+      "2024-03-10": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2024-11-03": {
+        "expected_hours": 25,
+        "min_rows_per_series": 25
+      },
+      "2025-03-09": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2025-11-02": {
+        "expected_hours": 25,
+        "min_rows_per_series": 25
+      },
+      "2026-03-08": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2026-11-01": {
+        "expected_hours": 25,
+        "min_rows_per_series": 25
+      }
+    },
+    "leakage_guard": {
+      "rows": 24912,
+      "rows_published_after_cutoff": 0,
+      "share_after_cutoff": 0.0,
+      "max_hours_late": 0.0,
+      "median_hours_before_cutoff": 0.83,
+      "min_hours_before_cutoff": 0.74
+    }
+  },
+  "solar_forecast_asof": {
+    "dataset_id": "ercot_solar_actual_and_forecast_by_geo_region_hourly",
+    "rows": 24912,
+    "duplicate_rows_on_keys": 0,
+    "null_pct_top5": {
+      "gen_system_wide": 100.0,
+      "hsl_system_wide": 100.0,
+      "gen_centerwest": 100.0,
+      "gen_northwest": 100.0,
+      "gen_centereast": 100.0
+    },
+    "first_interval_utc": "2024-01-01 06:00:00+00:00",
+    "last_interval_utc": "2026-11-04 05:00:00+00:00",
+    "gaps": {
+      "all": {
+        "expected": 24912,
+        "present": 24912,
+        "missing": 0
+      }
+    },
+    "dst_days": {
+      "2024-03-10": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2024-11-03": {
+        "expected_hours": 25,
+        "min_rows_per_series": 25
+      },
+      "2025-03-09": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2025-11-02": {
+        "expected_hours": 25,
+        "min_rows_per_series": 25
+      },
+      "2026-03-08": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2026-11-01": {
+        "expected_hours": 25,
+        "min_rows_per_series": 25
+      }
+    },
+    "leakage_guard": {
+      "rows": 24912,
+      "rows_published_after_cutoff": 0,
+      "share_after_cutoff": 0.0,
+      "max_hours_late": 0.0,
+      "median_hours_before_cutoff": 0.83,
+      "min_hours_before_cutoff": 0.81
+    }
+  },
+  "wind_actual_latest": {
+    "dataset_id": "ercot_wind_actual_and_forecast_by_geo_region_hourly",
+    "rows": 24909,
+    "duplicate_rows_on_keys": 0,
+    "null_pct_top5": {
+      "hsl_system_wide": 25.77,
+      "gen_system_wide": 0.02,
+      "gen_panhandle": 0.02,
+      "gen_coastal": 0.02,
+      "gen_south": 0.02
+    },
+    "first_interval_utc": "2024-01-01 06:00:00+00:00",
+    "last_interval_utc": "2026-11-04 05:00:00+00:00",
+    "gaps": {
+      "all": {
+        "expected": 24912,
+        "present": 24909,
+        "missing": 3
+      }
+    },
+    "dst_days": {
+      "2024-03-10": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2024-11-03": {
+        "expected_hours": 25,
+        "min_rows_per_series": 24
+      },
+      "2025-03-09": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2025-11-02": {
+        "expected_hours": 25,
+        "min_rows_per_series": 24
+      },
+      "2026-03-08": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2026-11-01": {
+        "expected_hours": 25,
+        "min_rows_per_series": 24
+      }
+    }
+  },
+  "solar_actual_latest": {
+    "dataset_id": "ercot_solar_actual_and_forecast_by_geo_region_hourly",
+    "rows": 24909,
+    "duplicate_rows_on_keys": 0,
+    "null_pct_top5": {
+      "hsl_system_wide": 25.79,
+      "cop_hsl_system_wide": 0.01,
+      "cop_hsl_centerwest": 0.01,
+      "cop_hsl_northwest": 0.01,
+      "cop_hsl_farwest": 0.01
+    },
+    "first_interval_utc": "2024-01-01 06:00:00+00:00",
+    "last_interval_utc": "2026-11-04 05:00:00+00:00",
+    "gaps": {
+      "all": {
+        "expected": 24912,
+        "present": 24909,
+        "missing": 3
+      }
+    },
+    "dst_days": {
+      "2024-03-10": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2024-11-03": {
+        "expected_hours": 25,
+        "min_rows_per_series": 24
+      },
+      "2025-03-09": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2025-11-02": {
+        "expected_hours": 25,
+        "min_rows_per_series": 24
+      },
+      "2026-03-08": {
+        "expected_hours": 23,
+        "min_rows_per_series": 23
+      },
+      "2026-11-01": {
+        "expected_hours": 25,
+        "min_rows_per_series": 24
+      }
+    }
+  }
+}
