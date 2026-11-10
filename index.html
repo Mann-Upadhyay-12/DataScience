@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Texas Grid Battery Dispatch & Valuation Lab</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<title>Texas Grid Battery Lab</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 :root {
   --paper: #efe6d2;
@@ -20,6 +20,7 @@
   --B: #1e6bc4;
   --K: #2b2417;
   --G: #2e7d32;
+  --P: #6b21a8;
   --skip: #8a2a1a;
   --cut-bg: rgba(46, 125, 50, 0.16);
   --skip-bg: rgba(138, 42, 26, 0.12);
@@ -37,10 +38,7 @@ body {
   line-height: 1.5;
 }
 
-.wrap {
-  max-width: 1250px;
-  margin: 0 auto;
-}
+.wrap { max-width: 1250px; margin: 0 auto; }
 
 h1 {
   margin: 0 0 4px;
@@ -111,7 +109,7 @@ h1 {
   box-shadow: 0 2px 0 var(--brass-d);
 }
 
-.card h2 {
+.card h2, h2 {
   margin: 0 0 10px;
   font-size: 15px;
   letter-spacing: .12em;
@@ -119,6 +117,18 @@ h1 {
   color: var(--brass-d);
   font-family: ui-monospace, Consolas, monospace;
 }
+
+h3 {
+  margin: 14px 0 6px;
+  font-size: 13px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink);
+  font-family: ui-monospace, Consolas, monospace;
+}
+
+.lead { font-size: 14px; margin: 0 0 12px; }
+.small { font-size: 12.5px; }
 
 /* KPI Summary Bar */
 .kpi-row {
@@ -135,7 +145,10 @@ h1 {
   padding: 10px 12px;
   text-align: center;
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+  cursor: pointer;
+  transition: background .12s ease;
 }
+.kpi-card:hover { background: rgba(255, 255, 255, 0.75); }
 
 .kpi-card .lbl {
   font-family: ui-monospace, Consolas, monospace;
@@ -162,6 +175,16 @@ h1 {
   margin-top: 2px;
 }
 
+.kpi-card .means {
+  font-size: 11.5px;
+  font-style: italic;
+  color: var(--ink);
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--line-d);
+  line-height: 1.35;
+}
+
 /* Form controls & Sliders */
 .controls-grid {
   display: grid;
@@ -174,23 +197,28 @@ h1 {
   margin-bottom: 16px;
 }
 
-.control-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
+.control-item { display: flex; flex-direction: column; gap: 4px; }
 
 .control-lbl {
   display: flex;
   justify-content: space-between;
+  gap: 8px;
   font-family: ui-monospace, Consolas, monospace;
   font-size: 11.5px;
   font-weight: bold;
   color: var(--brass-d);
 }
 
+.control-hint {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--ink-light);
+  line-height: 1.3;
+}
+
 input[type=range] {
   -webkit-appearance: none;
+  appearance: none;
   width: 100%;
   height: 6px;
   background: var(--paper3);
@@ -210,6 +238,15 @@ input[type=range]::-webkit-slider-thumb {
   box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
+input[type=range]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--brass-d);
+  cursor: pointer;
+  border: 1px solid #fff;
+}
+
 select {
   font-family: ui-monospace, Consolas, monospace;
   font-size: 12px;
@@ -219,6 +256,7 @@ select {
   border-radius: 4px;
   color: var(--ink);
   outline: none;
+  max-width: 100%;
 }
 
 select:focus { border-color: var(--brass-d); }
@@ -243,6 +281,7 @@ table.rt th, table.rt td {
   padding: 6px 10px;
   border-bottom: 1px solid var(--line);
   text-align: left;
+  vertical-align: top;
 }
 
 table.rt th {
@@ -253,9 +292,14 @@ table.rt th {
   text-transform: uppercase;
 }
 
+table.rt th.num, table.rt td.num { text-align: right; }
+table.rt th.center, table.rt td.center { text-align: center; }
 table.rt tr:hover td { background: rgba(255, 255, 255, 0.35); }
-table.rt td.num { text-align: right; }
-table.rt td.center { text-align: center; }
+table.rt td.desc { font-family: Georgia, serif; font-size: 12px; color: var(--ink-light); min-width: 220px; }
+table.rt tr.clickable { cursor: pointer; }
+table.rt tr.dim td { opacity: .45; }
+table.rt th.sortable { cursor: pointer; user-select: none; }
+table.rt th.sortable:hover { background: rgba(176, 141, 60, 0.3); }
 
 /* Stamp display box */
 .stamp-box {
@@ -294,8 +338,41 @@ table.rt td.center { text-align: center; }
   border-radius: 5px;
   padding: 2px 10px;
   display: inline-block;
-  font-size: 24px;
+  font-size: 22px;
 }
+
+.cut-num.alt {
+  background: rgba(176, 141, 60, 0.15);
+  border-color: var(--brass-d);
+  color: var(--brass-d);
+}
+
+.stamp-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.stamp-split .cap {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 10.5px;
+  letter-spacing: .06em;
+  color: var(--ink-light);
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+/* Meter */
+.meter {
+  height: 12px;
+  background: var(--paper3);
+  border: 1px solid var(--line-d);
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 8px 0 3px;
+}
+.meter > div { height: 100%; background: var(--brass); transition: width .2s ease; }
 
 /* Badge / Pills */
 .pill {
@@ -307,19 +384,32 @@ table.rt td.center { text-align: center; }
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.6);
   display: inline-block;
+  white-space: nowrap;
 }
 
-.pill.ok {
-  background: var(--cut-bg);
-  border-color: var(--G);
-  color: var(--G);
-}
+.pill.ok { background: var(--cut-bg); border-color: var(--G); color: var(--G); }
+.pill.warn { background: var(--skip-bg); border-color: var(--skip); color: var(--skip); }
 
-.pill.warn {
-  background: var(--skip-bg);
-  border-color: var(--skip);
-  color: var(--skip);
+/* Strategy toggle chips */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.chip {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 4px 10px 4px 8px;
+  border-radius: 999px;
+  border: 1.5px solid var(--line-d);
+  background: rgba(255,255,255,0.4);
+  color: var(--ink);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
+.chip:hover { background: rgba(176, 141, 60, 0.15); }
+.chip .sw { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.chip.off { opacity: .45; background: transparent; }
+.chip.off .sw { background: transparent !important; border: 1.5px solid var(--line-d); }
 
 /* Buttons */
 button {
@@ -338,16 +428,10 @@ button {
 button:hover { background: var(--brass-d); }
 button:active { transform: scale(0.98); }
 
-button.ghost {
-  background: transparent;
-  color: var(--ink);
-  border-color: var(--line-d);
-}
+button.ghost { background: transparent; color: var(--ink); border-color: var(--line-d); }
+button.ghost:hover { background: rgba(176, 141, 60, 0.15); border-color: var(--brass-d); }
 
-button.ghost:hover {
-  background: rgba(176, 141, 60, 0.15);
-  border-color: var(--brass-d);
-}
+.seg { display: inline-flex; flex-wrap: wrap; gap: 6px; }
 
 /* Chart Canvas container */
 .chart-box {
@@ -359,16 +443,15 @@ button.ghost:hover {
   height: 380px;
   margin-top: 10px;
 }
+.chart-box.short { height: 300px; }
 
-/* Two-column layout */
-.two-col {
-  display: grid;
-  grid-template-columns: 8fr 4fr;
-  gap: 16px;
-}
+/* Layout */
+.two-col { display: grid; grid-template-columns: 8fr 4fr; gap: 16px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 
 @media (max-width: 900px) {
-  .two-col { grid-template-columns: 1fr; }
+  .two-col, .grid2, .grid3 { grid-template-columns: 1fr; }
 }
 
 .note-box {
@@ -378,6 +461,153 @@ button.ghost:hover {
   color: var(--ink-light);
   border-left: 3px solid var(--brass);
   padding-left: 10px;
+}
+
+/* "How to read" + "What it means" boxes */
+.explain, .takeaway {
+  border-radius: 5px;
+  padding: 10px 14px;
+  margin: 10px 0 12px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.explain {
+  background: rgba(255, 255, 255, 0.35);
+  border: 1px dashed var(--line-d);
+}
+.takeaway {
+  background: rgba(46, 125, 50, 0.07);
+  border: 1px solid rgba(46, 125, 50, 0.35);
+  border-left: 4px solid var(--G);
+}
+.takeaway.warnbox {
+  background: var(--skip-bg);
+  border-color: rgba(138, 42, 26, 0.35);
+  border-left-color: var(--skip);
+}
+.explain .tag, .takeaway .tag {
+  display: block;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 10.5px;
+  font-weight: bold;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.explain .tag { color: var(--brass-d); }
+.takeaway .tag { color: var(--G); }
+.takeaway.warnbox .tag { color: var(--skip); }
+.explain ul, .takeaway ul { margin: 4px 0 0; padding-left: 18px; }
+.explain li, .takeaway li { margin: 2px 0; }
+
+/* Glossary hover terms */
+.term {
+  border-bottom: 1px dotted var(--brass-d);
+  cursor: help;
+}
+#tip {
+  position: fixed;
+  z-index: 50;
+  max-width: 300px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: Georgia, serif;
+  font-size: 12.5px;
+  line-height: 1.45;
+  padding: 8px 11px;
+  border-radius: 5px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.25);
+  pointer-events: none;
+  display: none;
+}
+#tip b { color: #e8c56a; font-family: ui-monospace, Consolas, monospace; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; display: block; margin-bottom: 2px; }
+
+/* Start-here story */
+.flow {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin: 10px 0 4px;
+}
+.flow-step {
+  background: rgba(255,255,255,0.5);
+  border: 1.5px solid var(--brass);
+  border-radius: 5px;
+  padding: 10px;
+  position: relative;
+  font-size: 12.5px;
+}
+.flow-step .n {
+  font-family: ui-monospace, Consolas, monospace;
+  font-weight: bold;
+  color: var(--brass-d);
+  font-size: 11px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 3px;
+}
+.flow-step:not(:last-child)::after {
+  content: '\25B6';
+  position: absolute;
+  right: -9px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--brass-d);
+  font-size: 10px;
+}
+@media (max-width: 900px) {
+  .flow { grid-template-columns: 1fr; }
+  .flow-step:not(:last-child)::after { content: '\25BC'; right: 50%; top: auto; bottom: -11px; transform: translateX(50%); }
+}
+
+.finding {
+  background: rgba(255,255,255,0.5);
+  border: 1.5px solid var(--brass);
+  border-radius: 5px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.finding .big {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 22px;
+  font-weight: bold;
+  color: var(--ink);
+}
+.finding .hd {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--brass-d);
+}
+.finding p { margin: 0; font-size: 13px; }
+.finding button { align-self: flex-start; margin-top: auto; }
+
+dl.gloss { margin: 0; display: grid; grid-template-columns: minmax(160px, 220px) 1fr; gap: 0; }
+dl.gloss dt, dl.gloss dd { margin: 0; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+dl.gloss dt { font-family: ui-monospace, Consolas, monospace; font-weight: bold; font-size: 12px; color: var(--brass-d); }
+dl.gloss dd { font-size: 13px; }
+@media (max-width: 640px) {
+  dl.gloss { grid-template-columns: 1fr; }
+  dl.gloss dt { border-bottom: none; padding-bottom: 0; }
+}
+
+.stat-line {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 6px;
+}
+
+.no-chart {
+  display: flex; align-items: center; justify-content: center; height: 100%;
+  font-style: italic; color: var(--ink-light); font-size: 13px; text-align: center;
 }
 </style>
 </head>
@@ -389,157 +619,189 @@ button.ghost:hover {
 
   <!-- Primary Navigation Tab Bar -->
   <div class="tab-bar">
-    <button type="button" class="tab-btn active" onclick="showTab('sim')" id="tabBtn-sim">1. What-If Dispatch Solver</button>
-    <button type="button" class="tab-btn" onclick="showTab('backtest')" id="tabBtn-backtest">2. Backtest Results</button>
-    <button type="button" class="tab-btn" onclick="showTab('ablation')" id="tabBtn-ablation">3. Leakage &amp; Placebo Audit</button>
-    <button type="button" class="tab-btn" onclick="showTab('hyp')" id="tabBtn-hyp">4. Hypotheses (H2–H4)</button>
-    <button type="button" class="tab-btn" onclick="showTab('siting')" id="tabBtn-siting">5. Hub Siting Analysis</button>
+    <button type="button" class="tab-btn active" data-tab="start" id="tabBtn-start">0. Start Here</button>
+    <button type="button" class="tab-btn" data-tab="sim" id="tabBtn-sim">1. What-If Dispatch</button>
+    <button type="button" class="tab-btn" data-tab="backtest" id="tabBtn-backtest">2. Backtest Results</button>
+    <button type="button" class="tab-btn" data-tab="ablation" id="tabBtn-ablation">3. Forecast &amp; Leakage Audit</button>
+    <button type="button" class="tab-btn" data-tab="hyp" id="tabBtn-hyp">4. Hypotheses (H2–H4)</button>
+    <button type="button" class="tab-btn" data-tab="siting" id="tabBtn-siting">5. Hub Siting &amp; Sizing</button>
+    <button type="button" class="tab-btn" data-tab="gloss" id="tabBtn-gloss">Glossary</button>
   </div>
 
-  <!-- KPI Ribbon Summary Bar -->
-  <div class="kpi-row">
-    <div class="kpi-card">
-      <div class="lbl">GBM Oracle Capture</div>
-      <div class="val">93.1%</div>
-      <div class="subval">+7.6% over 7-Day Avg</div>
+  <!-- KPI Ribbon Summary Bar (values computed from data.js) -->
+  <div class="kpi-row" id="kpiRow"></div>
+
+  <!-- TAB 0: START HERE -->
+  <div id="tab-start" class="tab-content">
+    <div class="card">
+      <h2>The Question This Project Answers</h2>
+      <p class="lead">
+        Suppose you own a <b>100&nbsp;MW / 200&nbsp;MWh battery</b> in Texas. Every morning, by 10:00, you must tell the grid operator
+        (<span class="term" data-g="ercot">ERCOT</span>) exactly when you will charge and discharge <i>tomorrow</i>. You get paid tomorrow's
+        <span class="term" data-g="dam">day-ahead price</span> for every MWh you sell and pay it for every MWh you buy.
+        <b>How much money can you actually make — and how much of it depends on how well you forecast tomorrow's prices?</b>
+      </p>
+
+      <div class="explain">
+        <span class="tag">How a battery earns money, in 3 lines</span>
+        <ul>
+          <li><b>Buy low, sell high:</b> charge in cheap hours (night, sunny midday), discharge in expensive hours (evening peak).</li>
+          <li><b>Every round trip leaks energy:</b> at 85% <span class="term" data-g="rte">round-trip efficiency</span>, 1&nbsp;MWh bought returns only 0.85&nbsp;MWh. So the sell price must beat the buy price by at least ~18% to be worth it.</li>
+          <li><b>You commit before you know:</b> the schedule is locked using a <i>forecast</i>. If the forecast gets the cheap/expensive hours in the wrong order, money is left on the table. That missed money is called <span class="term" data-g="regret">regret</span>.</li>
+        </ul>
+      </div>
+
+      <h3>The pipeline, step by step</h3>
+      <div class="flow">
+        <div class="flow-step"><span class="n">1 · Collect</span>Hourly ERCOT prices, load / wind / solar forecasts and weather, 2024 → Nov 2026. Each forecast is kept only if it was published <b>before the 09:45 cutoff</b>.</div>
+        <div class="flow-step"><span class="n">2 · Forecast</span>Predict tomorrow's 24 hourly prices with simple rules (yesterday, last week, 7-day average) and ML models (Lasso, gradient boosting).</div>
+        <div class="flow-step"><span class="n">3 · Optimize</span>A linear program picks the best charge/discharge schedule <i>for the forecast</i>, respecting power, energy, efficiency and ≤1 cycle/day.</div>
+        <div class="flow-step"><span class="n">4 · Settle</span>That locked schedule is paid at the <b>actual</b> prices of the day. No peeking — this is a <span class="term" data-g="walkforward">walk-forward</span> backtest.</div>
+        <div class="flow-step"><span class="n">5 · Score</span>Compare with the <span class="term" data-g="oracle">Oracle</span> (perfect foresight). The ratio is the <span class="term" data-g="capture">capture rate</span>.</div>
+      </div>
     </div>
-    <div class="kpi-card">
-      <div class="lbl">Arbitrage Revenue</div>
-      <div class="val">$33,931</div>
-      <div class="subval">per MW-year (HB_NORTH)</div>
+
+    <div class="card">
+      <h2>Key Findings (computed live from the results)</h2>
+      <div class="grid3" id="findingsGrid"></div>
     </div>
-    <div class="kpi-card">
-      <div class="lbl">Kendall's &tau; Metric</div>
-      <div class="val">0.800</div>
-      <div class="subval">|&rho;(&tau;)| = 0.437 &gt; |&rho;(MAE)|</div>
-    </div>
-    <div class="kpi-card">
-      <div class="lbl">Top Siting Hub</div>
-      <div class="val">HB_WEST</div>
-      <div class="subval">$45,706/MW-yr (Oracle)</div>
-    </div>
-    <div class="kpi-card">
-      <div class="lbl">Wind Forecast Drop</div>
-      <div class="val">&minus;4.0%</div>
-      <div class="subval">Largest Signal Source</div>
-    </div>
-    <div class="kpi-card">
-      <div class="lbl">Timing Leakage</div>
-      <div class="val" style="color:var(--G)">0.00%</div>
-      <div class="subval">24,912 / 24,912 Verified</div>
+
+    <div class="card">
+      <h2>Read This Before Trusting the Numbers</h2>
+      <div class="grid2">
+        <div class="explain" style="margin:0">
+          <span class="tag">Modelling simplifications</span>
+          <ul>
+            <li><b>Price-taker:</b> the battery's own trades are assumed not to move prices.</li>
+            <li><b>Hub prices, day-ahead only:</b> no nodal congestion, no real-time market, no ancillary services (which are a large share of real Texas battery revenue).</li>
+            <li><b>Each day stands alone:</b> the battery starts and ends every day empty, and is capped at 1 full cycle per day.</li>
+            <li><b>ML models were trained for HB_NORTH only.</b> Other hubs are compared using the simple-rule strategies.</li>
+          </ul>
+        </div>
+        <div class="explain" style="margin:0">
+          <span class="tag">Why the same hub shows two different revenues</span>
+          The ML models need ~6 months of history before their first forecast, so the head-to-head comparison including ML uses
+          <b id="nDaysMl">855</b> days (from 2024-07-01). The siting comparison uses all <b id="nDaysAll">1,030</b> days, which add the unusually lucrative first half of 2024.
+          That's why HB_NORTH's Oracle is <b id="oracleMl">$36,463</b>/MW-yr on tab 2 but <b id="oracleAll">$40,968</b>/MW-yr on tab 5.
+          Comparisons are only valid <i>within</i> one table.
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- TAB 1: WHAT-IF DISPATCH SIMULATOR -->
-  <div id="tab-sim" class="tab-content">
+  <div id="tab-sim" class="tab-content" style="display:none">
     <div class="card">
-      <h2>Co-Optimization Solver Controls &amp; Physical Parameters</h2>
-      
+      <h2>What-If Dispatch: Play With a Real Market Day</h2>
+      <div class="explain">
+        <span class="tag">What you're doing here</span>
+        Pick a real HB_NORTH day and change the battery. The page solves <b>two schedules</b> live:
+        the <span class="term" data-g="oracle">Oracle</span> plan (knows the actual prices) and the <b>forecast plan</b>
+        (only knows the model's D-1 forecast, exactly as it would have at 09:45 the day before). Both are paid at actual prices.
+        The difference between them is the money lost to forecast error.
+      </div>
+
       <div class="controls-grid">
         <div class="control-item">
-          <div class="control-lbl">
-            <span>Historical Market Day:</span>
-          </div>
-          <select id="simDate" onchange="runSimulation()">
-            <option value="2026-01-25">2026-01-25 &mdash; Winter Scarcity Surge ($1,537 Peak)</option>
-            <option value="2025-02-20">2025-02-20 &mdash; Winter Freezing Vortex ($145k/day)</option>
-            <option value="2024-08-06">2024-08-06 &mdash; Summer Peak 105&deg;F Demand ($116k/day)</option>
-            <option value="2025-05-20">2025-05-20 &mdash; Spring Solar Curtailment Drop ($95k/day)</option>
-            <option value="2024-10-15">2024-10-15 &mdash; Mild Shoulder Season (Normal Arbitrage)</option>
-            <option value="2026-04-12">2026-04-12 &mdash; High Wind Negative Price Hours</option>
-          </select>
+          <div class="control-lbl"><span>Historical Market Day:</span></div>
+          <select id="simDate"></select>
+          <div class="control-hint" id="hintDate"></div>
         </div>
 
         <div class="control-item">
-          <div class="control-lbl">
-            <span>Power Rating (MW):</span>
-            <span id="lblPower" class="mono">100 MW</span>
-          </div>
-          <input type="range" id="paramPower" min="20" max="400" step="10" value="100" oninput="runSimulation()">
+          <div class="control-lbl"><span>Power Rating (MW):</span><span id="lblPower" class="mono">100 MW</span></div>
+          <input type="range" id="paramPower" min="20" max="400" step="10" value="100">
+          <div class="control-hint">How fast it can charge/discharge. Revenue scales ~linearly with size (price-taker).</div>
         </div>
 
         <div class="control-item">
-          <div class="control-lbl">
-            <span>Storage Duration (Hours):</span>
-            <span id="lblDur" class="mono">2.0 h</span>
-          </div>
-          <input type="range" id="paramDur" min="1.0" max="6.0" step="0.5" value="2.0" oninput="runSimulation()">
+          <div class="control-lbl"><span>Storage Duration (Hours):</span><span id="lblDur" class="mono">2.0 h</span></div>
+          <input type="range" id="paramDur" min="1.0" max="6.0" step="0.5" value="2.0">
+          <div class="control-hint">Hours at full power. Longer = can also sell into the 2nd, 3rd… most expensive hour (each one less valuable).</div>
         </div>
 
         <div class="control-item">
-          <div class="control-lbl">
-            <span>Round-Trip Efficiency (RTE):</span>
-            <span id="lblRte" class="mono">85%</span>
-          </div>
-          <input type="range" id="paramRte" min="70" max="98" step="1" value="85" oninput="runSimulation()">
+          <div class="control-lbl"><span>Round-Trip Efficiency (RTE):</span><span id="lblRte" class="mono">85%</span></div>
+          <input type="range" id="paramRte" min="70" max="98" step="1" value="85">
+          <div class="control-hint">Share of energy you get back. Lower RTE = higher break-even spread, so fewer hours are worth trading.</div>
         </div>
 
         <div class="control-item">
-          <div class="control-lbl">
-            <span>Cell Degradation Cost:</span>
-            <span id="lblDegr" class="mono">$0.0/MWh</span>
-          </div>
-          <input type="range" id="paramDegr" min="0" max="25" step="1" value="0" oninput="runSimulation()">
+          <div class="control-lbl"><span>Cell Degradation Cost:</span><span id="lblDegr" class="mono">$0.0/MWh</span></div>
+          <input type="range" id="paramDegr" min="0" max="25" step="1" value="0">
+          <div class="control-hint">Wear cost charged per MWh discharged. Discourages cycling on low-spread days.</div>
         </div>
 
         <div class="control-item">
-          <div class="control-lbl">
-            <span>Price Volatility Multiplier:</span>
-            <span id="lblMult" class="mono">1.0x</span>
-          </div>
-          <input type="range" id="paramMult" min="0.5" max="3.0" step="0.1" value="1.0" oninput="runSimulation()">
+          <div class="control-lbl"><span>Price Volatility Multiplier:</span><span id="lblMult" class="mono">1.0x</span></div>
+          <input type="range" id="paramMult" min="0.0" max="3.0" step="0.1" value="1.0">
+          <div class="control-hint">Stretches each hour's distance from the daily average (mean is kept). 0 = flat prices = no arbitrage.</div>
+        </div>
+
+        <div class="control-item">
+          <div class="control-lbl"><span>Daily Cycle Limit:</span><span id="lblCyc" class="mono">1.0 / day</span></div>
+          <input type="range" id="paramCyc" min="0.5" max="3.0" step="0.5" value="1.0">
+          <div class="control-hint">Max energy discharged per day, in full-battery units. The backtest used 1.0.</div>
         </div>
       </div>
 
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
-        <button type="button" id="btnNegShock" onclick="toggleNegShock()" class="ghost">Inject Midday Negative Hours (&minus;$15/MWh)</button>
-        <button type="button" onclick="resetSimParams()" class="ghost">Reset Default Parameters</button>
-        <span class="mono" style="font-size:11px;opacity:0.8" id="simStatusNote">Continuous Linear Program Solver Ready</span>
+        <button type="button" id="btnNegShock" class="ghost">Surprise: Midday Prices Crash to &minus;$15 (forecast didn't see it)</button>
+        <button type="button" id="btnReset" class="ghost">Reset Default Parameters</button>
+        <span class="seg">
+          <span class="mono" style="font-size:11px;align-self:center">Show on chart:</span>
+          <button type="button" id="btnShowFc">Forecast Plan</button>
+          <button type="button" id="btnShowOr" class="ghost">Oracle Plan</button>
+        </span>
+        <span class="mono" style="font-size:11px;opacity:0.8" id="simStatusNote"></span>
       </div>
 
-      <!-- Two-Column Solver Results Area -->
       <div class="two-col" style="margin-top:16px">
         <div>
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <h2 style="margin:0">24-Hour Dispatch Trajectory</h2>
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+            <h2 style="margin:0" id="dispatchTitle">24-Hour Dispatch Trajectory</h2>
             <div class="mono" style="font-size:11px">
-              <span style="color:#b45309">&bull; DAM Price ($/MWh)</span> &nbsp;
-              <span style="color:var(--G)">&bull; Discharge MW</span> &nbsp;
-              <span style="color:var(--B)">&bull; Charge MW</span> &nbsp;
-              <span style="color:#6b21a8">&bull; State of Charge (%)</span>
+              <span style="color:#b45309">&bull; Actual price</span> &nbsp;
+              <span style="color:#7d6325">&#9476; Forecast price</span> &nbsp;
+              <span style="color:var(--G)">&bull; Discharge</span> &nbsp;
+              <span style="color:var(--B)">&bull; Charge</span> &nbsp;
+              <span style="color:var(--P)">&#9476; SoC %</span>
             </div>
           </div>
-          <div class="chart-box">
-            <canvas id="dispatchChart"></canvas>
-          </div>
+          <div class="chart-box"><canvas id="dispatchChart"></canvas></div>
+          <div class="takeaway" id="simTakeaway"><span class="tag">What this day means</span></div>
         </div>
 
         <div>
           <h2>Arbitrage Economic Realization</h2>
           <div class="stamp-box">
-            <div class="stamp-lbl">Day Arbitrage Revenue</div>
-            <div class="stamp-main" id="simDayRev">
-              <span class="cut-num">$0</span>
+            <div class="stamp-lbl">Day Revenue (paid at actual prices)</div>
+            <div class="stamp-split">
+              <div><div class="cap">Forecast plan</div><span class="cut-num" id="simRevFc">$0</span></div>
+              <div><div class="cap">Oracle plan</div><span class="cut-num alt" id="simRevOr">$0</span></div>
             </div>
-            <div style="font-family:ui-monospace,Consolas,monospace;font-size:12px;margin-top:4px" id="simAnnRev">
-              Annualized: $0 / MW-year
-            </div>
+            <div class="meter" title="Capture = forecast plan / oracle plan"><div id="simMeter" style="width:0%"></div></div>
+            <div class="mono" style="font-size:12px" id="simCapture">Capture: —</div>
           </div>
 
-          <div class="table-wrap">
+          <div class="mono" style="font-size:11px;color:var(--brass-d);font-weight:bold;letter-spacing:.06em" id="statsFor">STATS FOR: FORECAST PLAN</div>
+          <div class="table-wrap" style="margin-top:4px">
             <table class="rt">
-              <tr><td>Battery Capacity:</td><td class="num mono" id="outCap">200 MWh</td></tr>
-              <tr><td>Throughput Energy:</td><td class="num mono" id="outEnergy">0 MWh</td></tr>
-              <tr><td>Equivalent Daily Cycles:</td><td class="num mono" id="outCycles">0.0 cycles</td></tr>
-              <tr><td>Average Charge Price:</td><td class="num mono" id="outChgPrice">$0.00 / MWh</td></tr>
-              <tr><td>Average Discharge Price:</td><td class="num mono" id="outDisPrice">$0.00 / MWh</td></tr>
-              <tr><td>Realized Spread Captured:</td><td class="num mono" id="outSpread">$0.00 / MWh</td></tr>
-              <tr><td>Total Degradation Wear Cost:</td><td class="num mono" id="outDegrCost">$0.00</td></tr>
+              <tr><td>Battery capacity</td><td class="num mono" id="outCap">200 MWh</td></tr>
+              <tr><td>Energy discharged</td><td class="num mono" id="outEnergy">0 MWh</td></tr>
+              <tr><td><span class="term" data-g="cycle">Equivalent cycles</span></td><td class="num mono" id="outCycles">0.0</td></tr>
+              <tr><td>Avg. charge price</td><td class="num mono" id="outChgPrice">$0.00</td></tr>
+              <tr><td>Avg. discharge price</td><td class="num mono" id="outDisPrice">$0.00</td></tr>
+              <tr><td>Realized spread</td><td class="num mono" id="outSpread">$0.00</td></tr>
+              <tr><td><span class="term" data-g="breakeven">Break-even sell price</span></td><td class="num mono" id="outBreakeven">$0.00</td></tr>
+              <tr><td>Degradation wear cost</td><td class="num mono" id="outDegrCost">$0</td></tr>
+              <tr><td>Annualized (if every day were like this)</td><td class="num mono" id="outAnn">$0</td></tr>
             </table>
           </div>
 
           <div class="note-box">
-            Mathematical constraints enforced: &Delta;SoC<sub>t</sub> = &eta;<sub>c</sub> c<sub>t</sub> &minus; (1/&eta;<sub>d</sub>) d<sub>t</sub>; 0 &le; SoC<sub>t</sub> &le; E<sub>max</sub>; 0 &le; c<sub>t</sub>, d<sub>t</sub> &le; P<sub>max</sub>; terminal SoC<sub>T</sub> = 0.
+            Solver: exact dynamic program over 80 state-of-charge levels (the backtest uses a continuous LP; results agree to ~0.1%).
+            Constraints: SoC<sub>t+1</sub> = SoC<sub>t</sub> + &eta;c<sub>t</sub> &minus; d<sub>t</sub>/&eta;, &eta; = &radic;RTE; 0 &le; SoC &le; E<sub>max</sub>; 0 &le; c, d &le; P<sub>max</sub>; starts and ends empty; &Sigma;d &le; cycle limit &times; E<sub>max</sub> (enforced by a Lagrangian price on discharge).
           </div>
         </div>
       </div>
@@ -549,22 +811,28 @@ button.ghost:hover {
   <!-- TAB 2: BACKTEST RESULTS -->
   <div id="tab-backtest" class="tab-content" style="display:none">
     <div class="card">
-      <h2>Walk-Forward Backtest Strategy Comparison (855 Identical Days)</h2>
-      <div style="font-size:12.5px;margin-bottom:10px">
-        All dispatch schedules solved strictly on Day D-1 and settled against actual Day-Ahead Market settlement prices. HB_NORTH, 100 MW &times; 2 h, RTE 85%, degradation $0/MWh. Simultaneous charge/discharge prohibited.
+      <h2 id="btTitle">Walk-Forward Backtest Strategy Comparison</h2>
+      <div class="explain">
+        <span class="tag">How to read this table</span>
+        Every strategy faced the <b>same days</b> with the same 100&nbsp;MW &times; 2&nbsp;h battery at HB_NORTH (RTE 85%, no degradation cost).
+        <b>% of Oracle</b> is the share of the theoretical maximum each one captured.
+        <b>Daily gain vs S3</b> asks "is it really better than the simple persistence forecast, or just lucky?" — a
+        <span class="pill ok">Yes</span> means the 95% <span class="term" data-g="bootstrap">block-bootstrap</span> interval excludes zero.
+        <span class="term" data-g="tau">Kendall&nbsp;&tau;</span> measures how well the forecast <i>ranks</i> hours. Click a row to show/hide it on the chart below.
       </div>
-      
+
       <div class="table-wrap">
         <table class="rt" id="backtestTable">
           <thead>
             <tr>
               <th>Strategy</th>
+              <th>What it does</th>
               <th class="num">Revenue ($/MW-yr)</th>
               <th class="num">% of Oracle</th>
-              <th class="center">95% Bootstrap CI</th>
-              <th class="num">Daily Gain vs S3</th>
-              <th class="center">p &lt; 0.05</th>
-              <th class="num">Cycles/Day</th>
+              <th class="center">95% CI</th>
+              <th class="num">Daily gain vs S3</th>
+              <th class="center">Real edge?</th>
+              <th class="num">Cycles/day</th>
               <th class="num">Kendall &tau;</th>
             </tr>
           </thead>
@@ -572,73 +840,120 @@ button.ghost:hover {
         </table>
       </div>
 
+      <div class="takeaway" id="btTakeaway"><span class="tag">What it means</span></div>
+
       <div style="margin-top:20px">
-        <h2>Cumulative Out-Of-Sample Revenue Timeseries ($ Million)</h2>
-        <div style="display:flex;gap:8px;margin-bottom:8px">
-          <button type="button" id="btnCumRev" onclick="setPortfolioMetric('rev')">Cumulative Revenue</button>
-          <button type="button" id="btnCumReg" onclick="setPortfolioMetric('regret')" class="ghost">Cumulative Regret (vs Oracle)</button>
+        <h2>Performance Over Time</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap" id="pfMetricBtns">
+          <button type="button" data-m="rev">Cumulative Revenue</button>
+          <button type="button" data-m="regret" class="ghost">Cumulative Regret</button>
+          <button type="button" data-m="roll" class="ghost">Rolling 30-Day Capture</button>
+          <button type="button" data-m="month" class="ghost">Monthly Capture</button>
         </div>
-        <div class="chart-box">
-          <canvas id="portfolioChart"></canvas>
-        </div>
+        <div class="chips" id="pfChips"></div>
+        <div class="chart-box"><canvas id="portfolioChart"></canvas></div>
+        <div class="explain" id="pfExplain"></div>
       </div>
+    </div>
+
+    <div class="card">
+      <h2>Forecast Accuracy of Each Model (HB_NORTH, Hourly)</h2>
+      <div class="explain">
+        <span class="tag">Accuracy ≠ money</span>
+        <span class="term" data-g="mae">MAE</span> is the average dollar miss per hour; <span class="term" data-g="rmse">RMSE</span> punishes big misses (price spikes) much harder.
+        <span class="term" data-g="tau">Kendall&nbsp;&tau;</span> only cares whether the forecast puts the hours in the right <i>order</i> — which is what a battery actually needs.
+        The <span class="term" data-g="dm">Diebold-Mariano</span> p-value tests whether a model's errors are significantly different from the 7-day average's.
+      </div>
+      <div class="table-wrap">
+        <table class="rt">
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th class="num">MAE ($/MWh)</th>
+              <th class="num">RMSE ($/MWh)</th>
+              <th class="num">Worst miss</th>
+              <th class="num">Kendall &tau;</th>
+              <th class="num">MAE pre RTC+B</th>
+              <th class="num">MAE post RTC+B</th>
+              <th class="num">DM p vs avg7</th>
+              <th>Reading</th>
+            </tr>
+          </thead>
+          <tbody id="fcMetricsBody"></tbody>
+        </table>
+      </div>
+      <div class="takeaway" id="fcTakeaway"><span class="tag">What it means</span></div>
     </div>
   </div>
 
   <!-- TAB 3: LEAKAGE & ABLATION -->
   <div id="tab-ablation" class="tab-content" style="display:none">
     <div class="card">
-      <h2>9-Variant Feature Ablation &amp; The Placebo Proof</h2>
-      <div style="font-size:12.5px;margin-bottom:10px">
-        By systematically withholding feature groups and running a randomized placebo, we isolate where forecast signal originates and mathematically verify that no future information leaks through price lags.
+      <h2>Where Does the Forecast's Edge Come From? (Feature Ablation)</h2>
+      <div class="explain">
+        <span class="tag">What an ablation is</span>
+        Retrain the GBM model while <b>hiding one group of inputs</b> and see how much capture drops. A big drop = that information matters.
+        The <span class="term" data-g="placebo">placebo</span> keeps every column but scrambles the fundamentals between days — if the model still did well, it would mean it was cheating
+        (memorizing prices) rather than learning from load, wind and solar.
       </div>
+
+      <div class="chart-box short"><canvas id="ablationChart"></canvas></div>
 
       <div class="table-wrap">
         <table class="rt" id="ablationTable">
           <thead>
             <tr>
-              <th>Variant Description</th>
+              <th>Variant</th>
               <th class="center">Features</th>
               <th class="num">MAE ($/MWh)</th>
               <th class="num">RMSE ($/MWh)</th>
               <th class="num">Kendall &tau;</th>
               <th class="num">Oracle Capture</th>
               <th class="num">&Delta; vs Full</th>
-              <th>Physical Finding</th>
+              <th class="num">&asymp; $/MW-yr</th>
+              <th>Physical finding</th>
             </tr>
           </thead>
           <tbody id="ablationTableBody"></tbody>
         </table>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px">
+      <div class="takeaway" id="ablTakeaway"><span class="tag">What it means</span></div>
+
+      <div class="grid2" style="margin-top:6px">
         <div class="stamp-box" style="text-align:left">
           <div class="stamp-lbl">The Placebo Test Result</div>
-          <p style="font-size:12.5px;margin:4px 0 0">
-            When physical fundamentals are randomly scrambled across identical hours-of-day, capture falls immediately from <strong>93.0%</strong> to <strong>85.4%</strong> (exactly matching the 7-day average baseline). This proves that the predictive edge originates strictly from real physical fundamentals rather than price-lag memorization.
-          </p>
+          <p style="font-size:12.5px;margin:4px 0 0" id="placeboText"></p>
         </div>
 
         <div class="stamp-box" style="text-align:left">
           <div class="stamp-lbl">Mandatory Cutoff Timing Audit</div>
           <p style="font-size:12.5px;margin:4px 0 0">
-            Day-ahead bids in Texas close at 10:00 Central. Our pipeline enforces an absolute cutoff at <strong>09:45 Central on D-1</strong>. All 24,912 rows of load, wind, and solar forecasts were verified to have been published between 08:55 and 09:30 Central on D-1, strictly 15 to 50 minutes prior to cutoff.
+            Day-ahead bids in Texas close at 10:00 Central. The pipeline enforces a cutoff at <strong>09:45 Central on D-1</strong>:
+            for every target day it uses only the latest load, wind and solar forecast vintage published <i>before</i> that time.
+            Automated build tests found <strong>0</strong> forecasts published after the cutoff, <strong>0</strong> unlisted feature columns,
+            <strong>0</strong> same-day actuals among the features, and <strong>5 / 5</strong> lag spot-checks passed across the 24,912 hourly feature rows.
           </p>
         </div>
       </div>
 
-      <div style="margin-top:18px">
+      <div style="margin-top:6px">
         <h2>Spot-Checked Forecast Publish Times (Hand Audit Sample)</h2>
+        <div class="explain small">
+          <span class="tag">Why this matters</span>
+          <span class="term" data-g="leakage">Look-ahead leakage</span> is the most common way backtests lie. If a "D-1" wind forecast had actually been revised at 11:00,
+          the model would have seen information no trader had at bid time. Each row below is a randomly picked forecast vintage and when it was published.
+        </div>
         <div class="table-wrap">
           <table class="rt" id="auditTable">
             <thead>
               <tr>
                 <th>Dataset</th>
-                <th>Target Operating Day</th>
-                <th>Actual Publish Timestamp (Local)</th>
-                <th>Cutoff Deadline (Local)</th>
-                <th class="num">Hours Before Cutoff</th>
-                <th class="center">Verification Status</th>
+                <th>Target operating day</th>
+                <th>Published (local)</th>
+                <th>Cutoff (local)</th>
+                <th class="num">Margin before cutoff</th>
+                <th class="center">Status</th>
               </tr>
             </thead>
             <tbody id="auditTableBody"></tbody>
@@ -651,45 +966,112 @@ button.ghost:hover {
   <!-- TAB 4: HYPOTHESES (H2–H4) -->
   <div id="tab-hyp" class="tab-content" style="display:none">
     <div class="card">
-      <h2>Hypothesis H2: Rank Metric (&tau;) vs Daily Realized Capture</h2>
-      <div style="font-size:12.5px;margin-bottom:10px">
-        Battery arbitrage depends on ordering hours into cheapest charging and highest discharging bins, not exact dollar accuracy. Daily Kendall's &tau; correlates with lost regret at |&rho;| = 0.437, beating MAE (|0.305|) and RMSE (|0.272|).
+      <h2>H2: Does Getting the Hour <i>Order</i> Right Matter More Than Getting the Dollars Right?</h2>
+      <div class="explain">
+        <span class="tag">The idea</span>
+        A battery only needs to know <i>which</i> hours are cheapest and dearest. So a rank metric (Kendall&nbsp;&tau;) should predict how much money is lost on a day
+        better than MAE or RMSE do. Each dot is one day of the GBM strategy. Switch the axes to test it yourself — the correlation updates live.
       </div>
-      
-      <div class="chart-box">
-        <canvas id="rankChart"></canvas>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+        <label class="mono" style="font-size:11.5px;font-weight:bold;color:var(--brass-d)">X (forecast quality):
+          <select id="rankX">
+            <option value="tau">Kendall τ (rank)</option>
+            <option value="mae">MAE ($/MWh)</option>
+            <option value="rmse">RMSE ($/MWh)</option>
+          </select>
+        </label>
+        <label class="mono" style="font-size:11.5px;font-weight:bold;color:var(--brass-d)">Y (outcome):
+          <select id="rankY">
+            <option value="capture">Capture of Oracle (%)</option>
+            <option value="regret">Regret ($/day)</option>
+          </select>
+        </label>
+        <label class="mono" style="font-size:11.5px;font-weight:bold;color:var(--brass-d)">Days:
+          <select id="rankRegime">
+            <option value="all">All</option>
+            <option value="pre_RTCB">Before RTC+B</option>
+            <option value="post_RTCB">After RTC+B</option>
+          </select>
+        </label>
       </div>
+      <div class="chart-box"><canvas id="rankChart"></canvas></div>
+      <div class="table-wrap">
+        <table class="rt">
+          <thead><tr><th>Metric vs daily regret</th><th class="num">Spearman &rho; (rank)</th><th class="num">Pearson r (linear $)</th><th>Interpretation</th></tr></thead>
+          <tbody id="corrBody"></tbody>
+        </table>
+      </div>
+      <div class="takeaway" id="h2Takeaway"><span class="tag">Verdict</span></div>
+    </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px">
+    <div class="card">
+      <h2>H3: Is the Lost Money Concentrated in a Few Days?</h2>
+      <div class="explain">
+        <span class="tag">How to read the curve</span>
+        Sort all days from worst to best regret, then plot how much of the total lost money has piled up. If losses were spread evenly the curve would follow
+        the dashed diagonal. A curve that shoots up early means a <b>handful of extreme days</b> drive most of the gap to the Oracle.
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <label class="mono" style="font-size:11.5px;font-weight:bold;color:var(--brass-d)">Strategy:
+          <select id="lorenzStrat"></select>
+        </label>
+        <label class="mono" style="font-size:11.5px;font-weight:bold;color:var(--brass-d)">Highlight worst
+          <input type="range" id="lorenzPct" min="1" max="50" step="1" value="10" style="width:140px;vertical-align:middle">
+          <span id="lorenzPctLbl">10%</span> of days
+        </label>
+      </div>
+      <div class="grid2">
+        <div class="chart-box short"><canvas id="lorenzChart"></canvas></div>
         <div>
-          <h2>Hypothesis H3: Regret Concentration</h2>
           <div class="table-wrap">
-            <table class="rt">
-              <tr><td>Share of Regret from Top 10% Oracle Days:</td><td class="num mono" style="font-weight:bold;color:var(--amber)">48.8%</td></tr>
-              <tr><td>Share of Regret from 10 Worst Days:</td><td class="num mono" style="font-weight:bold;color:var(--R)">44.6%</td></tr>
-              <tr><td>Days Beating Oracle:</td><td class="num mono" style="font-weight:bold;color:var(--G)">0 (0.00%)</td></tr>
-              <tr><td>Total S6_gbm Regret over 855 Days:</td><td class="num mono">$593,028</td></tr>
-            </table>
+            <table class="rt" id="h3Table"></table>
           </div>
-          <div class="note-box">
-            Confirms H3: Nearly half of all lost revenue occurs in the top decile of price-spread volatility days.
-          </div>
+          <div class="takeaway" id="h3Takeaway"><span class="tag">What it means</span></div>
         </div>
+      </div>
+    </div>
 
+    <div class="card">
+      <h2>H4: Did the Dec-2025 Market Redesign (RTC+B) Change the Game?</h2>
+      <div class="explain">
+        <span class="tag">Background</span>
+        On <b>5 Dec 2025</b> ERCOT launched <span class="term" data-g="rtcb">RTC+B</span> (real-time co-optimization with batteries). Compare each strategy's capture before and after.
+        A drop means price shapes became harder to predict from simple patterns.
+      </div>
+      <div class="grid2">
+        <div class="chart-box short"><canvas id="rtcbChart"></canvas></div>
         <div>
-          <h2>Hypothesis H4: Structural Break (RTC+B)</h2>
           <div class="table-wrap">
             <table class="rt">
-              <tr><th>Strategy</th><th class="num">Pre-RTC+B Capture</th><th class="num">Post-RTC+B Capture</th></tr>
-              <tr><td>S6 GBM Optimizer:</td><td class="num mono">95.3%</td><td class="num mono" style="font-weight:bold">88.8%</td></tr>
-              <tr><td>S5 7-Day Average:</td><td class="num mono">89.4%</td><td class="num mono">78.1%</td></tr>
-              <tr><td>S3 Persistence:</td><td class="num mono">86.3%</td><td class="num mono">79.0%</td></tr>
-              <tr><td>S1 Fixed Windows:</td><td class="num mono">64.8%</td><td class="num mono">70.8%</td></tr>
+              <thead><tr><th>Strategy</th><th class="num">Pre</th><th class="num">Post</th><th class="num">Change</th></tr></thead>
+              <tbody id="h4Body"></tbody>
             </table>
           </div>
-          <div class="note-box">
-            Confirms H4: Market co-optimization with batteries tightened intraday price spreads, lowering overall capture rates post-December 2025 across all models.
+          <div class="takeaway" id="h4Takeaway"><span class="tag">What it means</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>What Is Forecast Accuracy Worth? (Value-of-Forecast Curve)</h2>
+      <div class="explain">
+        <span class="tag">The experiment</span>
+        Start from the true prices and add random noise of size &sigma; ($/MWh), then let the optimizer plan on the noisy "forecast". This shows how fast money disappears as forecasts get worse.
+        The second series blends truth with yesterday's prices (persistence) in increasing proportion.
+      </div>
+      <div class="grid2">
+        <div class="chart-box short"><canvas id="vocChart"></canvas></div>
+        <div>
+          <div class="control-item" style="margin-top:10px">
+            <div class="control-lbl"><span>Forecast noise &sigma;:</span><span class="mono" id="vocLbl">$10/MWh</span></div>
+            <input type="range" id="vocSlider" min="0" max="160" step="1" value="10">
           </div>
+          <div class="stamp-box" style="margin-top:12px">
+            <div class="stamp-lbl">Expected capture at this noise level</div>
+            <div class="stamp-main" id="vocCap">—</div>
+            <div class="mono" style="font-size:12px;margin-top:4px" id="vocRev"></div>
+          </div>
+          <div class="takeaway" id="vocTakeaway"><span class="tag">What it means</span></div>
         </div>
       </div>
     </div>
@@ -698,720 +1080,1138 @@ button.ghost:hover {
   <!-- TAB 5: HUB SITING -->
   <div id="tab-siting" class="tab-content" style="display:none">
     <div class="card">
-      <h2>Cross-Hub Battery Siting Comparison (1,030 Days)</h2>
-      <div style="font-size:12.5px;margin-bottom:10px">
-        Annualized battery revenue potential across all 6 ERCOT commercial hubs (100 MW &times; 2 h, RTE 85%).
+      <h2>Where Should the Battery Be Built? (6 ERCOT Hubs)</h2>
+      <div class="explain">
+        <span class="tag">How to read this</span>
+        Same battery (100&nbsp;MW &times; 2&nbsp;h, RTE 85%), same strategies, every hub, over <b id="sitingDays">1,030</b> days.
+        The <b>Oracle</b> bar is a hub's raw potential; the realistic strategies show what you'd actually bank.
+        <b>Left on table</b> = Oracle minus the best realistic strategy — the prize for building a better forecast at that hub. Click a column header to sort.
       </div>
-
-      <div class="chart-box">
-        <canvas id="sitingChart"></canvas>
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="sitingMetricBtns">
+        <button type="button" data-m="rev">Revenue $/MW-yr</button>
+        <button type="button" data-m="cap" class="ghost">Capture of Oracle %</button>
       </div>
+      <div class="chart-box"><canvas id="sitingChart"></canvas></div>
 
       <div class="table-wrap" style="margin-top:16px">
         <table class="rt" id="sitingTable">
           <thead>
             <tr>
-              <th>Hub Identifier</th>
-              <th class="num">Oracle ($/MW-yr)</th>
-              <th class="num">7-Day Avg ($/MW-yr)</th>
-              <th class="num">Persistence ($/MW-yr)</th>
-              <th class="num">Fixed Windows ($/MW-yr)</th>
-              <th>Physical Grid Dynamics</th>
+              <th class="sortable" data-k="hub">Hub</th>
+              <th class="num sortable" data-k="ORACLE">Oracle</th>
+              <th class="num sortable" data-k="S5_avg7_opt">7-Day Avg</th>
+              <th class="num sortable" data-k="S3_persistence_opt">Persistence</th>
+              <th class="num sortable" data-k="S1_fixed_windows">Fixed Windows</th>
+              <th class="num sortable" data-k="cap">Best capture</th>
+              <th class="num sortable" data-k="gap">Left on table</th>
+              <th>Context</th>
             </tr>
           </thead>
-          <tbody>
-            <tr>
-              <td><b>HB_WEST</b></td>
-              <td class="num mono" style="font-weight:bold;color:var(--G)">$45,706</td>
-              <td class="num mono">$39,141</td>
-              <td class="num mono">$36,440</td>
-              <td class="num mono">$31,017</td>
-              <td>Highest solar penetration coupled with sudden evening wind drops creates massive spread volatility.</td>
-            </tr>
-            <tr>
-              <td><b>HB_PAN</b></td>
-              <td class="num mono" style="font-weight:bold">$42,396</td>
-              <td class="num mono">$33,746</td>
-              <td class="num mono">$31,095</td>
-              <td class="num mono">$25,504</td>
-              <td>Export transmission bottlenecks yield frequent negative price hours followed by scarcity spikes.</td>
-            </tr>
-            <tr>
-              <td><b>HB_NORTH</b></td>
-              <td class="num mono">$40,968</td>
-              <td class="num mono">$35,345</td>
-              <td class="num mono">$34,555</td>
-              <td class="num mono">$27,207</td>
-              <td>Deep commercial liquidity serving the Dallas–Fort Worth metro load center.</td>
-            </tr>
-            <tr>
-              <td><b>HB_BUSAVG</b></td>
-              <td class="num mono">$40,147</td>
-              <td class="num mono">$35,013</td>
-              <td class="num mono">$33,816</td>
-              <td class="num mono">$26,775</td>
-              <td>System-wide ERCOT load-weighted bus average hub.</td>
-            </tr>
-            <tr>
-              <td><b>HB_HOUSTON</b></td>
-              <td class="num mono">$38,348</td>
-              <td class="num mono">$32,932</td>
-              <td class="num mono">$30,623</td>
-              <td class="num mono">$23,850</td>
-              <td>Heavy industrial/chemical baseload with humid coastal temperature buffers.</td>
-            </tr>
-            <tr>
-              <td><b>HB_SOUTH</b></td>
-              <td class="num mono">$38,188</td>
-              <td class="num mono">$33,184</td>
-              <td class="num mono">$32,024</td>
-              <td class="num mono">$25,334</td>
-              <td>South Texas load corridor serving San Antonio, Austin, and Rio Grande Valley.</td>
-            </tr>
-          </tbody>
+          <tbody id="sitingBody"></tbody>
         </table>
       </div>
+      <div class="takeaway" id="sitingTakeaway"><span class="tag">What it means</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Sizing: 2-Hour vs 4-Hour Battery at HB_NORTH</h2>
+      <div class="explain">
+        <span class="tag">Careful comparison</span>
+        The 4-hour sensitivity run also assumed a slightly better RTE (88%) and a $3/MWh degradation cost, so it is not a pure duration change.
+        "Per MW" rewards longer batteries automatically (they own twice the energy); "per MWh" shows whether each extra hour of storage pays its way.
+      </div>
+      <div class="table-wrap">
+        <table class="rt">
+          <thead>
+            <tr><th>Strategy</th><th class="num">2h $/MW-yr</th><th class="num">4h $/MW-yr</th><th class="num">2h $/MWh-yr</th><th class="num">4h $/MWh-yr</th><th class="num">2h capture</th><th class="num">4h capture</th></tr>
+          </thead>
+          <tbody id="sizingBody"></tbody>
+        </table>
+      </div>
+      <div class="takeaway" id="sizingTakeaway"><span class="tag">What it means</span></div>
+    </div>
+  </div>
+
+  <!-- TAB 6: GLOSSARY -->
+  <div id="tab-gloss" class="tab-content" style="display:none">
+    <div class="card">
+      <h2>Glossary &amp; Method Notes</h2>
+      <p class="small" style="margin-top:0">Every <span class="term" data-g="capture">dotted-underlined term</span> on this site shows its definition on hover or tap.</p>
+      <dl class="gloss" id="glossList"></dl>
     </div>
   </div>
 
 </div>
+
+<div id="tip" role="tooltip"></div>
 
 <!-- Real Data Object from data.js -->
 <script src="data.js"></script>
 
 <script>
 (() => {
+  'use strict';
   const D = window.TEXAS_GRID_DATA || {};
-  let currentTab = 'sim';
-  let negShock = false;
-  let portfolioMetric = 'rev';
-  let charts = {};
+  const HAS_CHART = typeof window.Chart !== 'undefined';
+  const charts = {};
+  const MONO = 'ui-monospace, Consolas, monospace';
+  const INK = '#2b2417', INK_L = '#574c38';
+  const $ = id => document.getElementById(id);
 
-  // Tab Navigation
-  window.showTab = function(tabId) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
-
-    const btn = document.getElementById('tabBtn-' + tabId);
-    const content = document.getElementById('tab-' + tabId);
-    if (btn) btn.classList.add('active');
-    if (content) content.style.display = 'block';
-
-    currentTab = tabId;
-
-    setTimeout(() => {
-      if (tabId === 'sim') runSimulation();
-      if (tabId === 'backtest') renderPortfolioChart();
-      if (tabId === 'hyp') renderRankChart();
-      if (tabId === 'siting') renderSitingChart();
-    }, 40);
+  // ---------------------------------------------------------------------------
+  // Glossary (also drives hover tooltips)
+  // ---------------------------------------------------------------------------
+  const G = {
+    ercot: ['ERCOT', 'Electric Reliability Council of Texas — runs the Texas power grid and its wholesale electricity markets.'],
+    dam: ['Day-Ahead Market (DAM)', 'Auction held the day before delivery. Bids close at 10:00 Central; it sets one price per hour of the next day. This project trades only here.'],
+    hub: ['Hub', 'A price index averaging many grid nodes in a region (e.g. HB_NORTH = Dallas–Fort Worth area). HB_BUSAVG is the system-wide average.'],
+    oracle: ['Oracle', 'The optimizer fed the actual prices (perfect foresight). Physically impossible, but it is the ceiling: no strategy can beat it on any day.'],
+    capture: ['Capture rate', 'Strategy revenue ÷ Oracle revenue over the same days. 93% means the strategy banked 93 cents of every dollar that was theoretically available.'],
+    regret: ['Regret', 'Oracle revenue minus strategy revenue: the money left on the table because the forecast was wrong. Always ≥ 0.'],
+    rte: ['Round-trip efficiency (RTE)', 'Fraction of energy that comes back out. At 85%, 1 MWh bought → 0.85 MWh sold. Modeled as √RTE lost on charge and √RTE on discharge.'],
+    cycle: ['Cycle', 'One full charge-discharge of the battery\'s energy capacity. 0.98 cycles/day = nearly one full use per day. The backtest caps it at 1/day to limit wear.'],
+    breakeven: ['Break-even sell price', 'Average buy price ÷ RTE + degradation cost. Selling below this loses money once efficiency losses and wear are counted.'],
+    tau: ['Kendall τ', 'Rank correlation between forecast and actual hourly prices (−1 to 1). τ = 0.8 means 90% of hour pairs are put in the correct order ((1+τ)/2).'],
+    mae: ['MAE', 'Mean absolute error: the average $/MWh the forecast misses by. Easy to read, but treats a $5 miss at 3 a.m. the same as a $5 miss at peak.'],
+    rmse: ['RMSE', 'Root mean squared error. Squares misses before averaging, so a few large spike misses dominate it.'],
+    dm: ['Diebold–Mariano test', 'Tests whether two forecasts have significantly different average error. p < 0.05 ⇒ the difference is unlikely to be chance.'],
+    bootstrap: ['Block bootstrap CI', 'Resample the days in 7-day blocks 2,000 times to see how much a result could vary by luck. Blocks preserve week-to-week correlation that a plain bootstrap would ignore.'],
+    walkforward: ['Walk-forward', 'Each day is forecast using only data available before it, then the model moves forward one day. Mimics live trading; no future data is ever used.'],
+    persistence: ['Persistence forecast', '"Tomorrow will look like today": each hour forecast = same hour of the previous day. The standard naive benchmark (S3).'],
+    ablation: ['Ablation', 'Remove one input group, retrain, and measure the damage. Reveals which information the model actually relies on.'],
+    placebo: ['Placebo test', 'Shuffle the fundamental inputs so they no longer line up with the right days. A model that still performs well must be getting its signal from somewhere illegitimate.'],
+    leakage: ['Look-ahead leakage', 'Accidentally letting a model see information that was not available at decision time (e.g. a forecast revised after the bid deadline). Makes backtests look too good.'],
+    rtcb: ['RTC+B', 'Real-Time Co-optimization plus Batteries — ERCOT market redesign live from 5 Dec 2025 that co-optimizes energy and reserves and models batteries natively. Treated as a structural break.'],
+    gbm: ['GBM', 'Gradient-boosted decision trees. Learns non-linear effects such as "low wind + high load ⇒ evening spike". The best model here.'],
+    lasso: ['Lasso', 'Linear regression with an L1 penalty that switches off unhelpful features. Fast and interpretable but can\'t capture spikes well.'],
+    netload: ['Net load', 'Demand minus wind and solar output — what thermal plants must supply. High net load usually means high prices.'],
+    pricetaker: ['Price-taker', 'Assumes the battery is too small to move market prices. Reasonable for one 100 MW unit; less so as Texas adds many GW of batteries.']
   };
 
-  window.toggleNegShock = function() {
-    negShock = !negShock;
-    const btn = document.getElementById('btnNegShock');
-    if (negShock) {
-      btn.textContent = 'Midday Negative Hours: ACTIVE (-$15)';
-      btn.style.background = 'var(--brass-d)';
-      btn.style.color = '#fff';
-    } else {
-      btn.textContent = 'Inject Midday Negative Hours (-$15/MWh)';
-      btn.style.background = 'transparent';
-      btn.style.color = 'var(--ink)';
-    }
-    runSimulation();
+  // ---------------------------------------------------------------------------
+  // Strategy metadata
+  // ---------------------------------------------------------------------------
+  const S = {
+    ORACLE:              { name: 'ORACLE (Perfect Foresight)', short: 'Oracle', color: '#574c38', dash: [5, 5], desc: 'Knows the real prices in advance. Unbeatable ceiling — not achievable.' },
+    S6_gbm_opt:          { name: 'S6 GBM Optimizer', short: 'GBM', color: '#b08d3c', desc: 'Gradient-boosted trees on ~100 inputs (load, wind, solar, weather, lags) → optimizer.' },
+    S6_ens_opt:          { name: 'S6 Ensemble (GBM + Lasso)', short: 'Ensemble', color: '#6b21a8', desc: 'Average of the GBM and Lasso forecasts → optimizer.' },
+    S6_lasso_opt:        { name: 'S6 Lasso Optimizer', short: 'Lasso', color: '#8a2a1a', desc: 'Sparse linear model on the same inputs → optimizer.' },
+    S5_avg7_opt:         { name: 'S5 7-Day Average Opt', short: '7-day avg', color: '#2e7d32', desc: 'Forecast = average of the same hour over the last 7 days → optimizer.' },
+    S4_weekly_naive_opt: { name: 'S4 Weekly Naive Opt', short: 'Weekly naive', color: '#1e6bc4', desc: 'Forecast = same hour, same weekday last week → optimizer.' },
+    S3_persistence_opt:  { name: 'S3 Persistence Opt (Reference)', short: 'Persistence', color: '#b45309', desc: 'Forecast = yesterday\'s prices → optimizer. The benchmark everything is tested against.' },
+    S2_yesterday_rule:   { name: 'S2 Yesterday Rule', short: 'Yesterday rule', color: '#c62828', desc: 'Charge in yesterday\'s 2 cheapest hours, discharge in its 2 priciest. No optimizer.' },
+    S1_fixed_windows:    { name: 'S1 Fixed Windows (11/19)', short: 'Fixed windows', color: '#7a6a4a', desc: 'Always charge 11:00–13:00, discharge 19:00–21:00. No forecast at all.' },
+    S0_no_battery:       { name: 'S0 No Battery', short: 'No battery', color: '#9e9480', desc: 'Earns nothing. Zero reference.' }
+  };
+  const ORDER = ['ORACLE', 'S6_gbm_opt', 'S6_ens_opt', 'S5_avg7_opt', 'S3_persistence_opt', 'S4_weekly_naive_opt', 'S6_lasso_opt', 'S1_fixed_windows', 'S2_yesterday_rule', 'S0_no_battery'];
+  const HUBS = ['HB_WEST', 'HB_PAN', 'HB_NORTH', 'HB_BUSAVG', 'HB_HOUSTON', 'HB_SOUTH'];
+  const HUB_NOTES = {
+    HB_WEST: 'Large wind and solar fleet far from load; evening wind/solar drop-offs create wide spreads.',
+    HB_PAN: 'Panhandle wind export area: transmission bottlenecks give cheap/negative hours then sharp spikes. Hardest to forecast.',
+    HB_NORTH: 'Dallas–Fort Worth load center; deep liquidity and the hub used for the ML models.',
+    HB_BUSAVG: 'Load-weighted average of all ERCOT buses — the "system" price.',
+    HB_HOUSTON: 'Industrial/petrochemical baseload with coastal temperature buffering.',
+    HB_SOUTH: 'San Antonio, Austin and Rio Grande Valley load corridor.'
   };
 
-  window.resetSimParams = function() {
-    document.getElementById('paramPower').value = 100;
-    document.getElementById('paramDur').value = 2.0;
-    document.getElementById('paramRte').value = 85;
-    document.getElementById('paramDegr').value = 0;
-    document.getElementById('paramMult').value = 1.0;
-    negShock = false;
-    const btn = document.getElementById('btnNegShock');
-    btn.textContent = 'Inject Midday Negative Hours (-$15/MWh)';
-    btn.style.background = 'transparent';
-    btn.style.color = 'var(--ink)';
-    runSimulation();
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
+  const ok = v => v !== undefined && v !== null && v !== -999 && !Number.isNaN(v);
+  const money = (v, dec = 0) => {
+    if (!ok(v)) return '—';
+    const s = Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+    return (v < 0 ? '−$' : '$') + s;
   };
+  const signedMoney = (v, dec = 0) => (v > 0 ? '+' : '') + money(v, dec);
+  const pct = (v, dec = 1) => ok(v) ? (v * 100).toFixed(dec) + '%' : '—';
+  const pts = (v, dec = 1) => ok(v) ? ((v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v * 100).toFixed(dec) + ' pts') : '—';
+  const num = (v, dec = 2) => ok(v) ? v.toFixed(dec) : '—';
+  const fmtM = v => '$' + v.toFixed(2) + 'M';
+  const hh = h => String(h).padStart(2, '0') + ':00';
+  const byStrat = (arr, k) => (arr || []).find(x => x.strategy === k) || {};
+  const sum = a => a.reduce((s, x) => s + x, 0);
+  const mean = a => a.length ? sum(a) / a.length : NaN;
 
-  window.setPortfolioMetric = function(m) {
-    portfolioMetric = m;
-    const bRev = document.getElementById('btnCumRev');
-    const bReg = document.getElementById('btnCumReg');
-    if (m === 'rev') {
-      bRev.className = '';
-      bReg.className = 'ghost';
-    } else {
-      bReg.className = '';
-      bRev.className = 'ghost';
+  function ranks(a) {
+    const idx = a.map((v, i) => [v, i]).sort((x, y) => x[0] - y[0]);
+    const r = new Array(a.length);
+    let i = 0;
+    while (i < idx.length) {
+      let j = i;
+      while (j + 1 < idx.length && idx[j + 1][0] === idx[i][0]) j++;
+      const avg = (i + j) / 2;
+      for (let k = i; k <= j; k++) r[idx[k][1]] = avg;
+      i = j + 1;
     }
-    renderPortfolioChart();
-  };
-
-  // Populate Tabular Content
-  function populateTables() {
-    // 1. Backtest Table
-    const tbodyBacktest = document.getElementById('backtestTableBody');
-    if (tbodyBacktest && D.summary_hb_north) {
-      const pairedMap = {};
-      (D.paired || []).forEach(p => pairedMap[p.strategy] = p);
-
-      const strats = [
-        { k: 'ORACLE', name: 'ORACLE (Upper Bound)', bold: true },
-        { k: 'S6_gbm_opt', name: 'S6 GBM Optimizer', bold: true, color: 'var(--brass-d)' },
-        { k: 'S6_ens_opt', name: 'S6 Ensemble (GBM + Lasso)', color: '#6b21a8' },
-        { k: 'S5_avg7_opt', name: 'S5 7-Day Average Opt', color: 'var(--G)' },
-        { k: 'S3_persistence_opt', name: 'S3 Persistence Opt (Reference)' },
-        { k: 'S4_weekly_naive_opt', name: 'S4 Weekly Naive Opt' },
-        { k: 'S6_lasso_opt', name: 'S6 Regularized Lasso Opt' },
-        { k: 'S1_fixed_windows', name: 'S1 Fixed Windows (11/19)' },
-        { k: 'S2_yesterday_rule', name: 'S2 Yesterday Rule' },
-        { k: 'S0_no_battery', name: 'S0 No Battery' }
-      ];
-
-      let html = '';
-      strats.forEach(s => {
-        const item = D.summary_hb_north.find(x => x.strategy === s.k) || {};
-        const p = pairedMap[s.k] || {};
-        const isRef = s.k === 'S3_persistence_opt';
-
-        const gain = isRef ? 'Reference' : (p.mean_daily_gain ? `${p.mean_daily_gain > 0 ? '+' : ''}$${p.mean_daily_gain.toFixed(1)}/day` : '—');
-        const sig = isRef ? '—' : (p.significant ? '<span class="pill ok">True</span>' : '<span class="pill warn">False</span>');
-        const ci = item.capture_ci_low !== -999 && item.capture_ci_low !== undefined ? `[${(item.capture_ci_low * 100).toFixed(1)}%, ${(item.capture_ci_high * 100).toFixed(1)}%]` : '—';
-        const tau = item.kendall_tau !== -999 && item.kendall_tau !== undefined ? item.kendall_tau.toFixed(3) : '—';
-
-        html += `
-          <tr>
-            <td style="${s.color ? `color:${s.color};` : ''}${s.bold ? 'font-weight:bold;' : ''}">${s.name}</td>
-            <td class="num mono" style="font-weight:bold">$${Math.round(item.revenue_per_mw_year || 0).toLocaleString()}</td>
-            <td class="num mono">${((item.capture_of_oracle || 0) * 100).toFixed(1)}%</td>
-            <td class="center mono" style="opacity:0.8">${ci}</td>
-            <td class="num mono" style="${p.mean_daily_gain > 0 ? 'color:var(--G);font-weight:bold;' : ''}">${gain}</td>
-            <td class="center">${sig}</td>
-            <td class="num mono">${(item.cycles_per_day || 0).toFixed(2)}</td>
-            <td class="num mono" style="font-weight:bold">${tau}</td>
-          </tr>
-        `;
-      });
-      tbodyBacktest.innerHTML = html;
+    return r;
+  }
+  function pearson(x, y) {
+    const mx = mean(x), my = mean(y);
+    let sxy = 0, sxx = 0, syy = 0;
+    for (let i = 0; i < x.length; i++) {
+      const a = x[i] - mx, b = y[i] - my;
+      sxy += a * b; sxx += a * a; syy += b * b;
     }
+    return sxy / Math.sqrt(sxx * syy);
+  }
+  const spearman = (x, y) => pearson(ranks(x), ranks(y));
 
-    // 2. Ablation Table
-    const tbodyAblation = document.getElementById('ablationTableBody');
-    if (tbodyAblation && D.ablation) {
-      let html = '';
-      const notes = {
-        'full': 'Complete model with all fundamentals',
-        'prices_and_calendar_only': 'Rules out fundamental leaks; matches 7-day average',
-        'no_load_forecast': 'Ablates ERCOT zonal load forecasts',
-        'no_wind_forecast': 'Largest contributor: wind forecast + net-load drop',
-        'no_solar_forecast': 'Evaluates daytime midday solar suppression',
-        'no_net_load_features': 'Ablates calculated system ramps and renewable shares',
-        'no_weather': 'Ablates 48h lead weather temperatures and cloud cover',
-        'no_actual_lags': 'Ablates 2-day lagged actual fuel mix and load',
-        'PLACEBO_shuffled_fundamentals': 'Fundamentals randomly permuted: capture falls directly to baseline'
-      };
-
-      D.ablation.forEach(a => {
-        const isPlacebo = a.variant.includes('PLACEBO');
-        const isFull = a.variant === 'full';
-        const isWind = a.variant === 'no_wind_forecast';
-
-        html += `
-          <tr style="${isPlacebo ? 'background:rgba(198,40,40,0.08);' : isFull ? 'background:rgba(176,141,60,0.12);' : ''}">
-            <td style="font-weight:${isPlacebo || isFull ? 'bold' : 'normal'};${isPlacebo ? 'color:var(--R);' : isFull ? 'color:var(--brass-d);' : ''}">${a.variant}</td>
-            <td class="center mono">${a.features}</td>
-            <td class="num mono">${a.MAE.toFixed(2)}</td>
-            <td class="num mono" style="opacity:0.7">${a.RMSE.toFixed(2)}</td>
-            <td class="num mono" style="font-weight:bold">${a.kendall_tau.toFixed(3)}</td>
-            <td class="num mono" style="font-weight:bold">${(a.capture_of_oracle * 100).toFixed(1)}%</td>
-            <td class="num mono" style="${a.capture_change_vs_full < -0.02 ? 'color:var(--R);font-weight:bold;' : ''}">${(a.capture_change_vs_full * 100).toFixed(1)}%</td>
-            <td style="font-size:11px;opacity:0.85">${notes[a.variant] || '—'}</td>
-          </tr>
-        `;
-      });
-      tbodyAblation.innerHTML = html;
+  function hourRanges(flags) {
+    const out = [];
+    let start = -1;
+    for (let h = 0; h <= flags.length; h++) {
+      if (h < flags.length && flags[h]) { if (start < 0) start = h; }
+      else if (start >= 0) { out.push(`${hh(start)}–${hh(h)}`); start = -1; }
     }
-
-    // 3. Audit Table
-    const tbodyAudit = document.getElementById('auditTableBody');
-    if (tbodyAudit && D.audit) {
-      let html = '';
-      D.audit.forEach(a => {
-        html += `
-          <tr>
-            <td class="mono" style="font-weight:bold;color:var(--brass-d)">${a.dataset}</td>
-            <td class="mono">${a.target_day}</td>
-            <td class="mono">${a.publish_local}</td>
-            <td class="mono" style="opacity:0.75">${a.cutoff_local}</td>
-            <td class="num mono" style="color:var(--G);font-weight:bold">${a.hours_before_cutoff.toFixed(2)} h</td>
-            <td class="center"><span class="pill ok">VERIFIED (D-1)</span></td>
-          </tr>
-        `;
-      });
-      tbodyAudit.innerHTML = html;
-    }
+    return out.length ? out.join(', ') : 'no hours';
   }
 
-  // Linear Program Co-Optimizer
-  window.runSimulation = function() {
-    const power = parseFloat(document.getElementById('paramPower').value);
-    const dur = parseFloat(document.getElementById('paramDur').value);
-    const rte = parseFloat(document.getElementById('paramRte').value) / 100.0;
-    const degr = parseFloat(document.getElementById('paramDegr').value);
-    const mult = parseFloat(document.getElementById('paramMult').value);
-    const dateKey = document.getElementById('simDate').value;
+  const axisTicks = (extra = {}) => Object.assign({ font: { family: MONO, size: 10 }, color: INK_L }, extra);
+  const axisTitle = text => ({ display: true, text, font: { size: 10.5 }, color: INK_L });
+  const legendCfg = { display: true, labels: { font: { family: MONO, size: 11 }, color: INK, boxWidth: 12 } };
+  const tooltipCfg = { titleFont: { family: MONO }, bodyFont: { family: MONO }, backgroundColor: 'rgba(43,36,23,0.92)' };
 
-    document.getElementById('lblPower').textContent = `${power} MW`;
-    document.getElementById('lblDur').textContent = `${dur.toFixed(1)} h`;
-    document.getElementById('lblRte').textContent = `${Math.round(rte * 100)}%`;
-    document.getElementById('lblDegr').textContent = `$${degr.toFixed(1)}/MWh`;
-    document.getElementById('lblMult').textContent = `${mult.toFixed(1)}x`;
-
-    const profiles = D.sim_profiles || {};
-    const prof = profiles[dateKey] || {
-      actual_prices: [30, 25, 22, 20, 18, 17, 24, 38, 55, 60, 45, 35, 28, 24, 28, 42, 65, 110, 280, 450, 220, 110, 60, 40]
-    };
-
-    const prices = prof.actual_prices.map((pr, h) => {
-      let adj = pr * mult;
-      if (negShock && (h >= 11 && h <= 15)) adj = -15.0;
-      return adj;
-    });
-
-    const maxEnergy = power * dur;
-    const eta = Math.sqrt(rte);
-    const T = prices.length;
-    const N_LEVELS = 80;
-    const socLevels = Array.from({ length: N_LEVELS }, (_, i) => (i / (N_LEVELS - 1)) * maxEnergy);
-
-    let V = new Array(N_LEVELS).fill(-Infinity);
-    V[0] = 0; // Starts empty
-    let parents = [];
-
-    for (let t = 0; t < T; t++) {
-      const nextV = new Array(N_LEVELS).fill(-Infinity);
-      const parentT = new Array(N_LEVELS).fill(0);
-      const price = prices[t];
-
-      for (let i = 0; i < N_LEVELS; i++) {
-        if (V[i] === -Infinity) continue;
-        const currentSoC = socLevels[i];
-
-        for (let j = 0; j < N_LEVELS; j++) {
-          const nextSoC = socLevels[j];
-          const delta = nextSoC - currentSoC;
-
-          let c = 0, d = 0;
-          if (delta > 0) {
-            c = delta / eta;
-            if (c > power + 1e-6) continue;
-          } else if (delta < 0) {
-            d = -delta * eta;
-            if (d > power + 1e-6) continue;
-          }
-
-          const cashflow = (price - degr) * d - price * c;
-          const total = V[i] + cashflow;
-
-          if (total > nextV[j]) {
-            nextV[j] = total;
-            parentT[j] = i;
-          }
-        }
-      }
-      parents.push(parentT);
-      V = nextV;
+  function makeChart(key, canvasId, cfg) {
+    const el = $(canvasId);
+    if (!el) return null;
+    if (!HAS_CHART) {
+      el.parentElement.innerHTML = '<div class="no-chart">Chart library could not load (offline?). Tables and explanations still work.</div>';
+      return null;
     }
+    if (charts[key]) charts[key].destroy();
+    charts[key] = new Chart(el, cfg);
+    return charts[key];
+  }
 
-    let bestIdx = 0;
-    let socIdxTraj = [bestIdx];
-    for (let t = T - 1; t >= 0; t--) {
-      bestIdx = parents[t][bestIdx];
-      socIdxTraj.unshift(bestIdx);
+  // Vertical marker line plugin (RTC+B go-live)
+  const vlinePlugin = {
+    id: 'vline',
+    afterDatasetsDraw(chart, args, opts) {
+      if (!opts || opts.index === undefined || opts.index < 0) return;
+      const x = chart.scales.x.getPixelForValue(opts.index);
+      const { top, bottom } = chart.chartArea;
+      const c = chart.ctx;
+      c.save();
+      c.strokeStyle = 'rgba(87,76,56,0.7)';
+      c.setLineDash([3, 3]);
+      c.beginPath(); c.moveTo(x, top); c.lineTo(x, bottom); c.stroke();
+      c.setLineDash([]);
+      c.fillStyle = INK_L;
+      c.font = `bold 10px ${MONO}`;
+      c.fillText(opts.label || '', x + 4, top + 12);
+      c.restore();
     }
-
-    const chargeMw = [];
-    const dischargeMw = [];
-    const socPct = [];
-    let totalRev = 0;
-    let totalDischargeMwh = 0;
-    let totalChargeMwh = 0;
-    let weightedChargeSum = 0;
-    let weightedDischargeSum = 0;
-
-    for (let t = 0; t < T; t++) {
-      const s0 = socLevels[socIdxTraj[t]];
-      const s1 = socLevels[socIdxTraj[t + 1]];
-      const delta = s1 - s0;
-
-      let c = 0, d = 0;
-      if (delta > 0) c = delta / eta;
-      else if (delta < 0) d = -delta * eta;
-
-      chargeMw.push(roundTo(c, 1));
-      dischargeMw.push(roundTo(d, 1));
-      socPct.push(roundTo((s1 / maxEnergy) * 100, 1));
-
-      const rev = (prices[t] - degr) * d - prices[t] * c;
-      totalRev += rev;
-      totalChargeMwh += c;
-      totalDischargeMwh += d;
-      weightedChargeSum += prices[t] * c;
-      weightedDischargeSum += prices[t] * d;
-    }
-
-    const avgCharge = totalChargeMwh > 0 ? (weightedChargeSum / totalChargeMwh) : 0;
-    const avgDischarge = totalDischargeMwh > 0 ? (weightedDischargeSum / totalDischargeMwh) : 0;
-    const cycles = totalDischargeMwh / maxEnergy;
-    const annRev = (totalRev / power) * 365.25;
-
-    // Update Output Labels
-    document.getElementById('simDayRev').innerHTML = `<span class="cut-num">$${Math.round(totalRev).toLocaleString()}</span>`;
-    document.getElementById('simAnnRev').textContent = `Annualized: $${Math.round(annRev).toLocaleString()} / MW-year`;
-    document.getElementById('outCap').textContent = `${maxEnergy} MWh`;
-    document.getElementById('outEnergy').textContent = `${Math.round(totalDischargeMwh).toLocaleString()} MWh`;
-    document.getElementById('outCycles').textContent = `${cycles.toFixed(2)} cycles`;
-    document.getElementById('outChgPrice').textContent = `$${avgCharge.toFixed(2)} / MWh`;
-    document.getElementById('outDisPrice').textContent = `$${avgDischarge.toFixed(2)} / MWh`;
-    document.getElementById('outSpread').textContent = `$${(avgDischarge - avgCharge).toFixed(2)} / MWh`;
-    document.getElementById('outDegrCost').textContent = `$${Math.round(degr * totalDischargeMwh).toLocaleString()}`;
-
-    renderDispatchChart(prices, chargeMw, dischargeMw, socPct);
   };
 
-  function renderDispatchChart(prices, charge, discharge, soc) {
-    const ctx = document.getElementById('dispatchChart');
-    if (!ctx) return;
-    if (charts.dispatch) charts.dispatch.destroy();
+  // ---------------------------------------------------------------------------
+  // Tooltips for glossary terms
+  // ---------------------------------------------------------------------------
+  const tip = $('tip');
+  function showTip(el) {
+    const g = G[el.dataset.g];
+    if (!g) return;
+    tip.innerHTML = `<b>${g[0]}</b>${g[1]}`;
+    tip.style.display = 'block';
+    const r = el.getBoundingClientRect();
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    let left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), window.innerWidth - w - 8);
+    let top = r.top - h - 8;
+    if (top < 8) top = r.bottom + 8;
+    tip.style.left = left + 'px';
+    tip.style.top = top + 'px';
+  }
+  const hideTip = () => { tip.style.display = 'none'; };
+  document.addEventListener('mouseover', e => { const t = e.target.closest('.term'); if (t) showTip(t); });
+  document.addEventListener('mouseout', e => { if (e.target.closest('.term')) hideTip(); });
+  document.addEventListener('click', e => { const t = e.target.closest('.term'); if (t) { showTip(t); e.stopPropagation(); } else hideTip(); });
+  window.addEventListener('scroll', hideTip, { passive: true });
 
-    const labels = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
+  function initTerms() {
+    document.querySelectorAll('.term').forEach(el => { el.tabIndex = 0; el.setAttribute('aria-label', (G[el.dataset.g] || [''])[1]); });
+    document.addEventListener('focusin', e => { if (e.target.classList && e.target.classList.contains('term')) showTip(e.target); });
+    document.addEventListener('focusout', hideTip);
+    $('glossList').innerHTML = Object.values(G).map(([t, d]) => `<dt>${t}</dt><dd>${d}</dd>`).join('');
+  }
 
-    charts.dispatch = new Chart(ctx, {
+  // ---------------------------------------------------------------------------
+  // Tabs
+  // ---------------------------------------------------------------------------
+  const rendered = {};
+  function showTab(tabId) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
+    document.querySelectorAll('.tab-content').forEach(c => { c.style.display = c.id === 'tab-' + tabId ? 'block' : 'none'; });
+    hideTip();
+    try { history.replaceState(null, '', '#' + tabId); } catch (e) { /* file:// or sandbox */ }
+    requestAnimationFrame(() => {
+      if (tabId === 'sim') runSimulation();
+      if (tabId === 'backtest') renderPortfolioChart();
+      if (tabId === 'ablation' && !rendered.abl) { renderAblationChart(); rendered.abl = true; }
+      if (tabId === 'hyp') { renderRank(); renderLorenz(); renderRtcb(); renderVoc(); }
+      if (tabId === 'siting') renderSiting();
+    });
+  }
+  window.showTab = showTab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+
+  // ---------------------------------------------------------------------------
+  // Headline numbers (computed once)
+  // ---------------------------------------------------------------------------
+  const N = D.summary_hb_north || [];
+  const gbm = byStrat(N, 'S6_gbm_opt'), avg7 = byStrat(N, 'S5_avg7_opt'), pers = byStrat(N, 'S3_persistence_opt'),
+        orc = byStrat(N, 'ORACLE'), fixed = byStrat(N, 'S1_fixed_windows');
+  const ablFull = (D.ablation || []).find(a => a.variant === 'full') || {};
+  const ablDrops = (D.ablation || []).filter(a => a.variant !== 'full' && !a.variant.includes('PLACEBO') && a.variant !== 'prices_and_calendar_only')
+    .sort((a, b) => a.capture_change_vs_full - b.capture_change_vs_full);
+  const placebo = (D.ablation || []).find(a => a.variant.includes('PLACEBO')) || {};
+  const sitingRank = HUBS.slice().sort((a, b) => ((D.siting_pivot || {})[b] || {}).ORACLE - ((D.siting_pivot || {})[a] || {}).ORACLE);
+  const topHub = sitingRank[0] || 'HB_WEST';
+  const gapGbm = byStrat(D.gap, 'S6_gbm_opt');
+
+  function renderKpis() {
+    const tau = gbm.kendall_tau;
+    const k = [
+      { tab: 'backtest', lbl: 'GBM Oracle Capture', val: pct(gbm.capture_of_oracle), sub: `${pts(gbm.capture_of_oracle - avg7.capture_of_oracle)} over 7-day avg`,
+        means: `Banks ${Math.round(gbm.capture_of_oracle * 100)}¢ of every $1 a perfect trader could make.` },
+      { tab: 'backtest', lbl: 'Arbitrage Revenue', val: money(gbm.revenue_per_mw_year), sub: 'per MW-year (HB_NORTH, GBM)',
+        means: `≈ ${money(gbm.revenue_per_mw_year * 100 / 1e6, 2)}M a year for the 100 MW battery, energy arbitrage only.` },
+      { tab: 'hyp', lbl: "Kendall's τ (GBM)", val: num(tau, 3), sub: 'rank accuracy of hourly forecast',
+        means: `Puts ${Math.round((1 + tau) / 2 * 100)}% of hour pairs in the right cheap→dear order.` },
+      { tab: 'siting', lbl: 'Top Siting Hub', val: topHub, sub: `${money(D.siting_pivot[topHub].ORACLE)}/MW-yr (Oracle)`,
+        means: `Widest price swings of the 6 hubs — the most raw arbitrage potential.` },
+      { tab: 'ablation', lbl: 'Most Valuable Input', val: pts(ablDrops[0] ? ablDrops[0].capture_change_vs_full : NaN), sub: `capture lost without ${ablDrops[0] ? ABL_LABEL(ablDrops[0].variant).replace('no ', '') : '—'}`,
+        means: `The single input group the model leans on most — more than load, solar or weather.` },
+      { tab: 'ablation', lbl: 'Timing Leakage', val: '0', valColor: 'var(--G)', sub: 'forecasts published after cutoff',
+        means: 'The model only ever saw what a real trader could have seen at 09:45.' }
+    ];
+    $('kpiRow').innerHTML = k.map(x => `
+      <div class="kpi-card" data-tab="${x.tab}" title="Open the tab that explains this">
+        <div class="lbl">${x.lbl}</div>
+        <div class="val"${x.valColor ? ` style="color:${x.valColor}"` : ''}>${x.val}</div>
+        <div class="subval">${x.sub}</div>
+        <div class="means">${x.means}</div>
+      </div>`).join('');
+    $('kpiRow').querySelectorAll('.kpi-card').forEach(c => c.addEventListener('click', () => showTab(c.dataset.tab)));
+  }
+
+  function renderStart() {
+    const all = (D.summary_all || []).find(x => x.hub === 'HB_NORTH' && x.strategy === 'ORACLE') || {};
+    $('nDaysMl').textContent = (orc.days || 0).toLocaleString();
+    $('nDaysAll').textContent = (all.days || 0).toLocaleString();
+    $('oracleMl').textContent = money(orc.revenue_per_mw_year);
+    $('oracleAll').textContent = money(all.revenue_per_mw_year);
+
+    const pGbm = byStrat(D.paired, 'S6_gbm_opt');
+    const f = [
+      { hd: 'Simple rules leave a lot behind', big: pct(fixed.capture_of_oracle, 0),
+        p: `A fixed "charge at 11, discharge at 19" rule captures only ${pct(fixed.capture_of_oracle, 0)} of the possible revenue. Just feeding yesterday's prices into an optimizer lifts that to ${pct(pers.capture_of_oracle, 0)}.`, tab: 'backtest' },
+      { hd: 'ML forecasting adds real money', big: pct(gbm.capture_of_oracle, 1),
+        p: `The GBM model captures ${pct(gbm.capture_of_oracle, 1)} — about ${money(pGbm.mean_daily_gain)} more per day than persistence (95% CI ${money(pGbm.ci_low)} to ${money(pGbm.ci_high)}), statistically significant.`, tab: 'backtest' },
+      { hd: 'The edge is physical, not a leak', big: pts(placebo.capture_change_vs_full),
+        p: `Scrambling the load/wind/solar inputs drops capture to ${pct(placebo.capture_of_oracle)} — the level of a no-fundamentals model. Wind forecasts are the single most valuable input.`, tab: 'ablation' },
+      { hd: 'Ordering beats accuracy (mostly)', big: 'τ > MAE',
+        p: 'On a day-by-day rank basis, how well a forecast orders the hours predicts lost revenue better than its dollar error does — but extreme spike days still dominate in dollar terms.', tab: 'hyp' },
+      { hd: 'A few days decide the year', big: pct(gapGbm.share_of_regret_on_top_decile_oracle_days, 0),
+        p: `Of all money the GBM strategy missed, ${pct(gapGbm.share_of_regret_on_top_decile_oracle_days, 0)} came from the 10% most volatile days. Forecasting spikes is where the remaining value is.`, tab: 'hyp' },
+      { hd: 'Location matters', big: topHub,
+        p: `${topHub} offers ${money(D.siting_pivot[topHub].ORACLE)}/MW-yr of potential vs ${money(D.siting_pivot[sitingRank[sitingRank.length - 1]].ORACLE)} at ${sitingRank[sitingRank.length - 1]}. After the Dec-2025 market redesign, capture fell for almost every strategy.`, tab: 'siting' }
+    ];
+    $('findingsGrid').innerHTML = f.map((x, i) => `
+      <div class="finding">
+        <div class="hd">${i + 1}. ${x.hd}</div>
+        <div class="big">${x.big}</div>
+        <p>${x.p}</p>
+        <button type="button" class="ghost" data-tab="${x.tab}">See the evidence &rarr;</button>
+      </div>`).join('');
+    $('findingsGrid').querySelectorAll('button').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+  }
+
+  // ---------------------------------------------------------------------------
+  // TAB 1: What-if dispatch (DP optimizer, plan on forecast or truth, settle on truth)
+  // ---------------------------------------------------------------------------
+  let negShock = false;
+  let showPlan = 'fc';
+  const N_LEVELS = 80;
+
+  function dpSchedule(prices, P, E, eta, penalty) {
+    const T = prices.length;
+    const step = E / (N_LEVELS - 1);
+    const kUp = Math.floor((P * eta) / step + 1e-9);   // max levels gained per hour (grid draw ≤ P)
+    const kDn = Math.floor((P / eta) / step + 1e-9);   // max levels lost per hour (grid delivery ≤ P)
+    let V = new Float64Array(N_LEVELS).fill(-Infinity);
+    V[0] = 0;
+    const parents = [];
+    for (let t = 0; t < T; t++) {
+      const nv = new Float64Array(N_LEVELS).fill(-Infinity);
+      const par = new Int16Array(N_LEVELS);
+      const p = prices[t];
+      for (let i = 0; i < N_LEVELS; i++) {
+        const vi = V[i];
+        if (vi === -Infinity) continue;
+        const jLo = Math.max(0, i - kDn), jHi = Math.min(N_LEVELS - 1, i + kUp);
+        for (let j = jLo; j <= jHi; j++) {
+          const delta = (j - i) * step;
+          const cf = delta >= 0 ? -p * (delta / eta) : (p - penalty) * (-delta * eta);
+          const tot = vi + cf;
+          if (tot > nv[j]) { nv[j] = tot; par[j] = i; }
+        }
+      }
+      parents.push(par);
+      V = nv;
+    }
+    const traj = new Array(T + 1);
+    traj[T] = 0;
+    for (let t = T - 1; t >= 0; t--) traj[t] = parents[t][traj[t + 1]];
+    const c = [], d = [], soc = [];
+    for (let t = 0; t < T; t++) {
+      const delta = (traj[t + 1] - traj[t]) * step;
+      c.push(delta > 0 ? delta / eta : 0);
+      d.push(delta < 0 ? -delta * eta : 0);
+      soc.push(traj[t + 1] * step / E * 100);
+    }
+    return { c, d, soc };
+  }
+
+  // Enforce Σd ≤ cap·E with a Lagrangian price λ on discharge (bisection)
+  function planDay(planPrices, P, E, eta, degr, cap) {
+    let best = dpSchedule(planPrices, P, E, eta, degr);
+    const uncappedCycles = sum(best.d) / E;
+    if (uncappedCycles <= cap + 1e-6) return { ...best, uncappedCycles, binding: false };
+    let lo = 0, hi = Math.max(...planPrices.map(Math.abs)) * 2 + 50;
+    for (let it = 0; it < 16; it++) {
+      const mid = (lo + hi) / 2;
+      const s = dpSchedule(planPrices, P, E, eta, degr + mid);
+      if (sum(s.d) / E <= cap + 1e-6) { hi = mid; best = s; } else lo = mid;
+    }
+    if (sum(best.d) / E > cap + 1e-6) best = dpSchedule(planPrices, P, E, eta, degr + hi);
+    return { ...best, uncappedCycles, binding: true };
+  }
+
+  function settle(s, actual, degr) {
+    let rev = 0, cM = 0, dM = 0, cW = 0, dW = 0;
+    for (let t = 0; t < actual.length; t++) {
+      rev += actual[t] * (s.d[t] - s.c[t]) - degr * s.d[t];
+      cM += s.c[t]; dM += s.d[t]; cW += actual[t] * s.c[t]; dW += actual[t] * s.d[t];
+    }
+    return { rev, cM, dM, avgC: cM > 0 ? cW / cM : NaN, avgD: dM > 0 ? dW / dM : NaN };
+  }
+
+  function stretch(arr, mult) {
+    const m = mean(arr);
+    return arr.map(p => m + mult * (p - m));
+  }
+
+  function populateDates() {
+    const sel = $('simDate');
+    const profs = D.sim_profiles || {};
+    const keys = Object.keys(profs).sort((a, b) => profs[b].spread - profs[a].spread);
+    sel.innerHTML = keys.map(k => {
+      const p = profs[k];
+      return `<option value="${k}">${k} — ${p.description} (spread ${money(p.spread)})</option>`;
+    }).join('');
+  }
+
+  function runSimulation() {
+    const P = +$('paramPower').value, dur = +$('paramDur').value, rte = +$('paramRte').value / 100,
+          degr = +$('paramDegr').value, mult = +$('paramMult').value, cap = +$('paramCyc').value;
+    $('lblPower').textContent = `${P} MW`;
+    $('lblDur').textContent = `${dur.toFixed(1)} h`;
+    $('lblRte').textContent = `${Math.round(rte * 100)}%`;
+    $('lblDegr').textContent = `$${degr.toFixed(1)}/MWh`;
+    $('lblMult').textContent = `${mult.toFixed(1)}x`;
+    $('lblCyc').textContent = `${cap.toFixed(1)} / day`;
+
+    const prof = (D.sim_profiles || {})[$('simDate').value];
+    if (!prof) return;
+    $('hintDate').textContent = `Actual range ${money(prof.min_price, 2)} – ${money(prof.max_price, 2)}/MWh. Sorted by spread (most volatile first).`;
+
+    const actual = stretch(prof.actual_prices, mult).map((p, h) => (negShock && h >= 11 && h <= 15) ? -15 : p);
+    const fc = stretch(prof.forecast_prices || prof.actual_prices, mult);
+    const E = P * dur, eta = Math.sqrt(rte);
+
+    const t0 = performance.now();
+    const planOr = planDay(actual, P, E, eta, degr, cap);
+    const planFc = planDay(fc, P, E, eta, degr, cap);
+    const ms = performance.now() - t0;
+    const rOr = settle(planOr, actual, degr), rFc = settle(planFc, actual, degr);
+    const capture = rOr.rev > 1e-6 ? rFc.rev / rOr.rev : NaN;
+
+    $('simRevFc').textContent = money(rFc.rev);
+    $('simRevOr').textContent = money(rOr.rev);
+    $('simMeter').style.width = `${Math.max(0, Math.min(100, (capture || 0) * 100))}%`;
+    $('simMeter').style.background = capture < 0.7 ? 'var(--skip)' : capture < 0.9 ? 'var(--brass)' : 'var(--G)';
+    $('simCapture').textContent = ok(capture) ? `Capture: ${pct(capture)} · lost to forecast error: ${money(rOr.rev - rFc.rev)}` : 'Capture: — (no profitable trade exists)';
+    $('simStatusNote').textContent = `Solved 2 schedules in ${ms.toFixed(0)} ms`;
+
+    const s = showPlan === 'fc' ? planFc : planOr, r = showPlan === 'fc' ? rFc : rOr;
+    $('statsFor').textContent = `STATS FOR: ${showPlan === 'fc' ? 'FORECAST PLAN' : 'ORACLE PLAN'}`;
+    $('dispatchTitle').textContent = `24-Hour Dispatch — ${showPlan === 'fc' ? 'Forecast Plan' : 'Oracle Plan'}`;
+    $('outCap').textContent = `${E.toLocaleString()} MWh`;
+    $('outEnergy').textContent = `${Math.round(r.dM).toLocaleString()} MWh`;
+    $('outCycles').textContent = `${(r.dM / E).toFixed(2)}`;
+    $('outChgPrice').textContent = ok(r.avgC) ? `${money(r.avgC, 2)} / MWh` : '—';
+    $('outDisPrice').textContent = ok(r.avgD) ? `${money(r.avgD, 2)} / MWh` : '—';
+    $('outSpread').textContent = ok(r.avgC) && ok(r.avgD) ? `${money(r.avgD - r.avgC, 2)} / MWh` : '—';
+    const be = ok(r.avgC) ? r.avgC / rte + degr : NaN;
+    $('outBreakeven').textContent = ok(be) ? `${money(be, 2)} / MWh` : '—';
+    $('outDegrCost').textContent = money(degr * r.dM);
+    $('outAnn').textContent = `${money(r.rev / P * 365)} /MW-yr`;
+
+    renderDispatchChart(actual, fc, s);
+
+    // Narrative
+    const iMin = actual.indexOf(Math.min(...actual)), iMax = actual.indexOf(Math.max(...actual));
+    const chgH = hourRanges(s.c.map(x => x > 0.05)), disH = hourRanges(s.d.map(x => x > 0.05));
+    const lines = [];
+    lines.push(`Prices ran from <b>${money(actual[iMin], 2)}</b> at ${hh(iMin)} to <b>${money(actual[iMax], 2)}</b> at ${hh(iMax)} — a spread of <b>${money(actual[iMax] - actual[iMin], 2)}/MWh</b>.`);
+    if (r.dM < 0.5) {
+      lines.push(`The ${showPlan === 'fc' ? 'forecast' : 'oracle'} plan <b>does not trade</b>: no pair of hours had a spread large enough to beat the ${Math.round((1 / rte - 1) * 100)}% efficiency loss${degr > 0 ? ' plus wear cost' : ''}.`);
+    } else {
+      lines.push(`The ${showPlan === 'fc' ? 'forecast' : 'oracle'} plan charges ${chgH} (avg ${money(r.avgC, 2)}) and discharges ${disH} (avg ${money(r.avgD, 2)}). Each MWh bought returns only ${rte.toFixed(2)} MWh, so selling only pays above <b>${money(be, 2)}</b>.`);
+    }
+    if (ok(capture)) {
+      const verdict = capture >= 0.95 ? 'The forecast got the hour order almost exactly right.' :
+        capture >= 0.8 ? 'The forecast found roughly the right hours but mistimed some of them.' :
+        'The forecast badly misjudged which hours would be cheap or dear.';
+      lines.push(`Planning on the D-1 forecast earned <b>${pct(capture)}</b> of the perfect-foresight revenue. ${verdict}`);
+    }
+    if (negShock) lines.push('The surprise midday crash was <b>invisible to the forecast plan</b> but the oracle charged into it — this is what an unforecast event costs.');
+    if (planOr.binding) lines.push(`The ${cap.toFixed(1)}-cycle limit is binding: unconstrained, the oracle would have cycled ${planOr.uncappedCycles.toFixed(2)}×. Raise the limit to see how much extra cycling is worth.`);
+    const annOr = rOr.rev / P * 365, btOr = orc.revenue_per_mw_year;
+    lines.push(`<i>Scale check:</i> repeating this day all year would give ${money(annOr)}/MW-yr (oracle) vs the backtest's real average of ${money(btOr)} — ${annOr > btOr * 1.5 ? 'a rare high-value day; a handful like it drive annual results (see H3).' : annOr < btOr * 0.5 ? 'a quiet day; most of the year\'s money is made on days far more volatile than this.' : 'roughly a typical day.'}`);
+    $('simTakeaway').innerHTML = `<span class="tag">What this day means</span><ul>${lines.map(l => `<li>${l}</li>`).join('')}</ul>`;
+  }
+  window.runSimulation = runSimulation;
+
+  function renderDispatchChart(actual, fc, s) {
+    const labels = actual.map((_, i) => hh(i));
+    const ch = charts.dispatch;
+    const ds = [
+      { type: 'line', label: 'Actual price ($/MWh)', data: actual.map(v => +v.toFixed(2)), borderColor: '#b45309', backgroundColor: 'transparent', borderWidth: 2.2, yAxisID: 'yPrice', pointRadius: 2.5, pointBackgroundColor: '#b45309', order: 1 },
+      { type: 'line', label: 'Forecast price ($/MWh)', data: fc.map(v => +v.toFixed(2)), borderColor: '#7d6325', backgroundColor: 'transparent', borderWidth: 1.6, borderDash: [5, 4], yAxisID: 'yPrice', pointRadius: 0, order: 2 },
+      { type: 'line', label: 'State of charge (%)', data: s.soc.map(v => +v.toFixed(1)), borderColor: '#6b21a8', borderWidth: 1.8, borderDash: [2, 3], yAxisID: 'ySoc', pointRadius: 0, order: 3 },
+      { type: 'bar', label: 'Discharge MW', data: s.d.map(v => +v.toFixed(1)), backgroundColor: 'rgba(46,125,50,0.75)', borderColor: '#2e7d32', borderWidth: 1, yAxisID: 'yPower', order: 4 },
+      { type: 'bar', label: 'Charge MW', data: s.c.map(v => -(+v.toFixed(1))), backgroundColor: 'rgba(30,107,196,0.75)', borderColor: '#1e6bc4', borderWidth: 1, yAxisID: 'yPower', order: 5 }
+    ];
+    if (ch) { // update in place: smooth slider interaction
+      ch.data.datasets.forEach((d, i) => { d.data = ds[i].data; });
+      ch.update('none');
+      return;
+    }
+    makeChart('dispatch', 'dispatchChart', {
       type: 'bar',
-      data: {
-        labels,
-        datasets: [
-          {
-            type: 'line',
-            label: 'DAM Price ($/MWh)',
-            data: prices,
-            borderColor: '#b45309',
-            backgroundColor: 'transparent',
-            borderWidth: 2.2,
-            yAxisID: 'yPrice',
-            pointRadius: 2.5,
-            pointBackgroundColor: '#b45309',
-            order: 1
-          },
-          {
-            type: 'line',
-            label: 'State of Charge (%)',
-            data: soc,
-            borderColor: '#6b21a8',
-            borderWidth: 1.8,
-            borderDash: [4, 4],
-            yAxisID: 'ySoc',
-            pointRadius: 0,
-            order: 2
-          },
-          {
-            type: 'bar',
-            label: 'Discharge MW',
-            data: discharge,
-            backgroundColor: 'rgba(46, 125, 50, 0.75)',
-            borderColor: '#2e7d32',
-            borderWidth: 1,
-            yAxisID: 'yPower',
-            order: 3
-          },
-          {
-            type: 'bar',
-            label: 'Charge MW',
-            data: charge.map(x => -x),
-            backgroundColor: 'rgba(30, 107, 196, 0.75)',
-            borderColor: '#1e6bc4',
-            borderWidth: 1,
-            yAxisID: 'yPower',
-            order: 4
-          }
-        ]
-      },
+      data: { labels, datasets: ds },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
+        responsive: true, maintainAspectRatio: false, animation: false,
+        interaction: { mode: 'index', intersect: false },
         plugins: {
-          legend: { display: false }
+          legend: { display: false },
+          tooltip: Object.assign({}, tooltipCfg, { callbacks: { label: c => {
+            const v = c.parsed.y;
+            if (c.dataset.yAxisID === 'yPrice') return `${c.dataset.label}: ${money(v, 2)}`;
+            if (c.dataset.yAxisID === 'ySoc') return `SoC: ${v}%`;
+            return `${c.dataset.label.replace(' MW', '')}: ${Math.abs(v)} MW`;
+          } } })
         },
         scales: {
-          x: {
-            grid: { color: 'rgba(0,0,0,0.06)' },
-            ticks: { font: { family: 'ui-monospace, Consolas', size: 10 }, color: '#574c38' }
-          },
-          yPrice: {
-            type: 'linear',
-            position: 'left',
-            grid: { color: 'rgba(0,0,0,0.08)' },
-            ticks: {
-              font: { family: 'ui-monospace, Consolas', size: 10 },
-              color: '#b45309',
-              callback: v => `$${v}`
-            },
-            title: { display: true, text: 'DAM Price ($/MWh)', font: { size: 10 } }
-          },
-          yPower: {
-            type: 'linear',
-            position: 'right',
-            grid: { display: false },
-            ticks: {
-              font: { family: 'ui-monospace, Consolas', size: 10 },
-              color: '#1e6bc4',
-              callback: v => `${Math.abs(v)} MW`
-            },
-            title: { display: true, text: 'Discharge (+) / Charge (-) MW', font: { size: 10 } }
-          },
-          ySoc: {
-            type: 'linear',
-            position: 'right',
-            min: 0,
-            max: 100,
-            display: false
-          }
+          x: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: axisTicks() },
+          yPrice: { type: 'linear', position: 'left', grid: { color: 'rgba(0,0,0,0.08)' }, ticks: axisTicks({ color: '#b45309', callback: v => money(v) }), title: axisTitle('Price ($/MWh)') },
+          yPower: { type: 'linear', position: 'right', grid: { display: false }, ticks: axisTicks({ color: '#1e6bc4', callback: v => `${Math.abs(v)} MW` }), title: axisTitle('Discharge (+) / Charge (−) MW') },
+          ySoc: { type: 'linear', position: 'right', min: 0, max: 100, display: false }
         }
       }
     });
+  }
+
+  function setNegShockBtn() {
+    const b = $('btnNegShock');
+    b.textContent = negShock ? 'Surprise Midday Crash: ACTIVE (11:00–16:00 at −$15)' : 'Surprise: Midday Prices Crash to −$15 (forecast didn\'t see it)';
+    b.className = negShock ? '' : 'ghost';
+  }
+  function setPlanBtns() {
+    $('btnShowFc').className = showPlan === 'fc' ? '' : 'ghost';
+    $('btnShowOr').className = showPlan === 'or' ? '' : 'ghost';
+  }
+  function bindSim() {
+    ['paramPower', 'paramDur', 'paramRte', 'paramDegr', 'paramMult', 'paramCyc'].forEach(id => $(id).addEventListener('input', runSimulation));
+    $('simDate').addEventListener('change', runSimulation);
+    $('btnNegShock').addEventListener('click', () => { negShock = !negShock; setNegShockBtn(); runSimulation(); });
+    $('btnShowFc').addEventListener('click', () => { showPlan = 'fc'; setPlanBtns(); runSimulation(); });
+    $('btnShowOr').addEventListener('click', () => { showPlan = 'or'; setPlanBtns(); runSimulation(); });
+    $('btnReset').addEventListener('click', () => {
+      const def = { paramPower: 100, paramDur: 2.0, paramRte: 85, paramDegr: 0, paramMult: 1.0, paramCyc: 1.0 };
+      Object.entries(def).forEach(([k, v]) => { $(k).value = v; });
+      negShock = false; showPlan = 'fc'; setNegShockBtn(); setPlanBtns(); runSimulation();
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // TAB 2: Backtest
+  // ---------------------------------------------------------------------------
+  let pfMetric = 'rev';
+  const pfOn = new Set(['ORACLE', 'S6_gbm_opt', 'S5_avg7_opt', 'S3_persistence_opt', 'S1_fixed_windows']);
+  const PF_STRATS = ORDER.filter(k => k !== 'S0_no_battery');
+
+  function renderBacktestTable() {
+    const days = orc.days || (D.daily || []).length;
+    const first = (D.daily || [])[0], last = (D.daily || [])[(D.daily || []).length - 1];
+    $('btTitle').textContent = `Walk-Forward Backtest — HB_NORTH, ${days} Identical Days${first ? ` (${first.date} → ${last.date})` : ''}`;
+    const paired = {};
+    (D.paired || []).forEach(p => { paired[p.strategy] = p; });
+    $('backtestTableBody').innerHTML = ORDER.map(k => {
+      const it = byStrat(N, k), p = paired[k] || {}, m = S[k];
+      const isRef = k === 'S3_persistence_opt';
+      const gain = isRef ? '<i>reference</i>' : ok(p.mean_daily_gain) ? `${signedMoney(p.mean_daily_gain)}/day<div style="opacity:.65;font-size:10.5px">[${money(p.ci_low)}, ${money(p.ci_high)}]</div>` : '—';
+      const sig = isRef || !ok(p.mean_daily_gain) ? '—' :
+        p.significant ? (p.mean_daily_gain > 0 ? '<span class="pill ok">Yes, better</span>' : '<span class="pill warn">Yes, worse</span>') :
+        '<span class="pill">Not proven</span>';
+      const ci = ok(it.capture_ci_low) && k !== 'ORACLE' && k !== 'S0_no_battery' ? `[${pct(it.capture_ci_low)}, ${pct(it.capture_ci_high)}]` : '—';
+      const clickable = PF_STRATS.includes(k);
+      return `<tr class="${clickable ? 'clickable' : ''} ${clickable && !pfOn.has(k) ? 'dim' : ''}" data-k="${k}">
+        <td style="white-space:nowrap;font-weight:bold;color:${m.color}"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${m.color};margin-right:6px"></span>${m.name}</td>
+        <td class="desc">${m.desc}</td>
+        <td class="num mono" style="font-weight:bold">${money(it.revenue_per_mw_year)}</td>
+        <td class="num mono">${pct(it.capture_of_oracle)}</td>
+        <td class="center mono" style="opacity:0.8">${ci}</td>
+        <td class="num mono" style="${p.mean_daily_gain > 0 && !isRef ? 'color:var(--G);font-weight:bold;' : ''}">${gain}</td>
+        <td class="center">${sig}</td>
+        <td class="num mono">${num(it.cycles_per_day)}</td>
+        <td class="num mono" style="font-weight:bold">${num(it.kendall_tau, 3)}</td>
+      </tr>`;
+    }).join('');
+    $('backtestTableBody').querySelectorAll('tr.clickable').forEach(tr => tr.addEventListener('click', () => toggleStrat(tr.dataset.k)));
+
+    const pA = paired.S5_avg7_opt || {}, pG = paired.S6_gbm_opt || {}, pE = paired.S6_ens_opt || {};
+    $('btTakeaway').innerHTML = `<span class="tag">What it means</span><ul>
+      <li><b>An optimizer matters more than you'd think:</b> just planning on yesterday's prices (S3) earns ${pct(pers.capture_of_oracle, 0)} of the maximum vs ${pct(fixed.capture_of_oracle, 0)} for fixed clock windows — ${money(pers.revenue_per_mw_year - fixed.revenue_per_mw_year)}/MW-yr more for zero forecasting effort.</li>
+      <li><b>Smarter simple forecasts don't clearly help:</b> the 7-day average looks a bit better than persistence (${signedMoney(pA.mean_daily_gain)}/day), but the confidence interval includes zero — it could be luck.</li>
+      <li><b>The ML model is a real improvement:</b> GBM adds ${signedMoney(pG.mean_daily_gain)}/day over persistence (${money(pG.mean_daily_gain * 365 / 100)}/MW-yr), closing ${pct((gbm.capture_of_oracle - pers.capture_of_oracle) / (1 - pers.capture_of_oracle), 0)} of the remaining gap to the Oracle. Averaging it with Lasso (ensemble, ${signedMoney(pE.mean_daily_gain)}/day) makes it <i>worse</i> — the weaker model drags it down.</li>
+      <li>Nothing gets close to 100%: even the best model leaves ${money(orc.revenue_per_mw_year - gbm.revenue_per_mw_year)}/MW-yr on the table.</li>
+    </ul>`;
+  }
+
+  function renderChips() {
+    $('pfChips').innerHTML = PF_STRATS.map(k => `<span class="chip ${pfOn.has(k) ? '' : 'off'}" data-k="${k}"><span class="sw" style="background:${S[k].color}"></span>${S[k].short}</span>`).join('');
+    $('pfChips').querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => toggleStrat(c.dataset.k)));
+  }
+  function toggleStrat(k) {
+    if (pfOn.has(k)) pfOn.delete(k); else pfOn.add(k);
+    renderChips();
+    document.querySelectorAll('#backtestTableBody tr.clickable').forEach(tr => tr.classList.toggle('dim', !pfOn.has(tr.dataset.k)));
+    renderPortfolioChart();
   }
 
   function renderPortfolioChart() {
-    const ctx = document.getElementById('portfolioChart');
-    if (!ctx || !D.daily) return;
-    if (charts.portfolio) charts.portfolio.destroy();
+    const daily = D.daily || [];
+    if (!daily.length) return;
+    const strats = PF_STRATS.filter(k => pfOn.has(k) && !(pfMetric !== 'rev' && k === 'ORACLE'));
+    let labels, datasets, yTitle, yCb, rtcbIdx, explain;
 
-    const isRev = portfolioMetric === 'rev';
-    const sample = D.daily.filter((_, i) => i % 2 === 0);
-    const labels = sample.map(x => x.date);
+    if (pfMetric === 'month') {
+      const cm = D.capture_m || [];
+      labels = cm.map(x => x.month);
+      rtcbIdx = labels.indexOf('2025-12');
+      datasets = strats.map(k => ({ label: S[k].short, data: cm.map(x => ok(x[k]) ? +(x[k] * 100).toFixed(1) : null), borderColor: S[k].color, backgroundColor: S[k].color, borderWidth: k === 'S6_gbm_opt' ? 2.6 : 1.6, pointRadius: 2, tension: 0.2 }));
+      datasets.push({ type: 'bar', label: 'Oracle $/day (right axis)', data: cm.map(x => x.oracle_mean_usd_per_day), backgroundColor: 'rgba(176,141,60,0.18)', borderColor: 'rgba(125,99,37,0.4)', borderWidth: 1, yAxisID: 'y2', order: 10 });
+      yTitle = 'Capture of Oracle (%)'; yCb = v => `${v}%`;
+      explain = '<span class="tag">How to read</span>Each point is one month\'s capture. The shaded bars are how much money was available that month (Oracle $/day for 100 MW). Notice capture often <i>drops</i> in high-value months: volatile months are the hardest to forecast and the most expensive to get wrong.';
+    } else if (pfMetric === 'roll') {
+      labels = daily.map(x => x.date);
+      rtcbIdx = daily.findIndex(x => x.regime === 'post_RTCB');
+      const W = 30;
+      datasets = strats.map(k => {
+        const data = daily.map((_, i) => {
+          if (i < W - 1) return null;
+          let a = 0, o = 0;
+          for (let j = i - W + 1; j <= i; j++) { a += daily[j][k]; o += daily[j].ORACLE; }
+          return o > 0 ? +(a / o * 100).toFixed(1) : null;
+        });
+        return { label: S[k].short, data, borderColor: S[k].color, borderWidth: k === 'S6_gbm_opt' ? 2.4 : 1.5, pointRadius: 0 };
+      });
+      yTitle = '30-day capture of Oracle (%)'; yCb = v => `${v}%`;
+      explain = '<span class="tag">How to read</span>Capture over a sliding 30-day window. Dips show stretches where forecasts struggled — typically around extreme weather events. The dashed line marks the RTC+B market redesign.';
+    } else {
+      labels = daily.map(x => x.date);
+      rtcbIdx = daily.findIndex(x => x.regime === 'post_RTCB');
+      const isRev = pfMetric === 'rev';
+      datasets = strats.map(k => ({
+        label: `${S[k].short}${byStrat(N, k).capture_of_oracle ? ` (${pct(byStrat(N, k).capture_of_oracle)})` : ''}`,
+        data: daily.map(x => isRev ? x['cum_' + k] : x['regret_' + k]),
+        borderColor: S[k].color, borderDash: S[k].dash || [], borderWidth: k === 'S6_gbm_opt' ? 2.6 : 1.6, pointRadius: 0
+      }));
+      yTitle = isRev ? 'Cumulative revenue, 100 MW battery ($M)' : 'Cumulative regret vs Oracle ($M)'; yCb = v => `$${v}M`;
+      const last = daily[daily.length - 1];
+      explain = isRev
+        ? `<span class="tag">How to read</span>Total money banked by a 100 MW battery since ${daily[0].date}. Final values: ${strats.map(k => `${S[k].short} <b>${fmtM(last['cum_' + k])}</b>`).join(' · ')}. Steep steps are spike days — a single day can add more than a quiet month.`
+        : `<span class="tag">How to read</span>Running total of money missed versus perfect foresight; lower is better. Final values: ${strats.map(k => `${S[k].short} <b>${fmtM(last['regret_' + k])}</b>`).join(' · ')}. Jumps reveal the specific days where a forecast failed badly.`;
+    }
+    $('pfExplain').innerHTML = explain;
 
-    const datasets = isRev ? [
-      {
-        label: 'ORACLE Upper Bound',
-        data: sample.map(x => x.cum_ORACLE),
-        borderColor: '#574c38',
-        borderWidth: 2,
-        borderDash: [5, 5],
-        pointRadius: 0
-      },
-      {
-        label: 'S6 GBM Optimizer (93.1%)',
-        data: sample.map(x => x.cum_S6_gbm_opt),
-        borderColor: '#b08d3c',
-        borderWidth: 2.5,
-        pointRadius: 0
-      },
-      {
-        label: 'S6 Ensemble (90.5%)',
-        data: sample.map(x => x.cum_S6_ens_opt),
-        borderColor: '#6b21a8',
-        borderWidth: 1.8,
-        pointRadius: 0
-      },
-      {
-        label: 'S5 7-Day Average (85.5%)',
-        data: sample.map(x => x.cum_S5_avg7_opt),
-        borderColor: '#2e7d32',
-        borderWidth: 1.8,
-        pointRadius: 0
-      },
-      {
-        label: 'S3 Persistence (83.8%)',
-        data: sample.map(x => x.cum_S3_persistence_opt),
-        borderColor: '#b45309',
-        borderWidth: 1.5,
-        pointRadius: 0
-      }
-    ] : [
-      {
-        label: 'S3 Persistence Regret',
-        data: sample.map(x => x.regret_S3_persistence_opt),
-        borderColor: '#b45309',
-        borderWidth: 1.5,
-        pointRadius: 0
-      },
-      {
-        label: 'S5 7-Day Average Regret',
-        data: sample.map(x => x.regret_S5_avg7_opt),
-        borderColor: '#2e7d32',
-        borderWidth: 1.8,
-        pointRadius: 0
-      },
-      {
-        label: 'S6 Ensemble Regret',
-        data: sample.map(x => x.regret_S6_ens_opt),
-        borderColor: '#6b21a8',
-        borderWidth: 1.8,
-        pointRadius: 0
-      },
-      {
-        label: 'S6 GBM Regret (Lowest)',
-        data: sample.map(x => x.regret_S6_gbm_opt),
-        borderColor: '#b08d3c',
-        borderWidth: 2.5,
-        pointRadius: 0
-      }
-    ];
-
-    charts.portfolio = new Chart(ctx, {
+    makeChart('portfolio', 'portfolioChart', {
       type: 'line',
       data: { labels, datasets },
+      plugins: [vlinePlugin],
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
+        responsive: true, maintainAspectRatio: false, animation: false,
+        interaction: { mode: 'index', intersect: false },
         plugins: {
-          legend: {
-            display: true,
-            labels: { font: { family: 'ui-monospace, Consolas', size: 11 }, color: '#2b2417', boxWidth: 12 }
-          }
+          legend: legendCfg,
+          vline: { index: rtcbIdx, label: 'RTC+B go-live' },
+          tooltip: Object.assign({}, tooltipCfg, { itemSort: (a, b) => b.parsed.y - a.parsed.y })
         },
         scales: {
-          x: {
-            grid: { color: 'rgba(0,0,0,0.05)' },
-            ticks: { font: { family: 'ui-monospace, Consolas', size: 10 }, color: '#574c38', maxTicksLimit: 12 }
-          },
-          y: {
-            grid: { color: 'rgba(0,0,0,0.08)' },
-            ticks: {
-              font: { family: 'ui-monospace, Consolas', size: 10 },
-              color: '#574c38',
-              callback: v => `$${v}M`
-            },
-            title: { display: true, text: isRev ? 'Cumulative Revenue ($M)' : 'Cumulative Regret ($M)', font: { size: 10 } }
-          }
+          x: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: axisTicks({ maxTicksLimit: 12 }) },
+          y: { grid: { color: 'rgba(0,0,0,0.08)' }, ticks: axisTicks({ callback: yCb }), title: axisTitle(yTitle) },
+          ...(pfMetric === 'month' ? { y2: { position: 'right', grid: { display: false }, ticks: axisTicks({ callback: v => `$${Math.round(v / 1000)}k` }), title: axisTitle('Oracle $/day') } } : {})
         }
       }
     });
   }
 
-  function renderRankChart() {
-    const ctx = document.getElementById('rankChart');
-    if (!ctx || !D.rank_scatter) return;
-    if (charts.rank) charts.rank.destroy();
+  function bindBacktest() {
+    $('pfMetricBtns').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+      pfMetric = b.dataset.m;
+      $('pfMetricBtns').querySelectorAll('button').forEach(x => { x.className = x.dataset.m === pfMetric ? '' : 'ghost'; });
+      renderPortfolioChart();
+    }));
+  }
 
-    const data = D.rank_scatter.map(p => ({ x: p.tau, y: p.capture * 100 }));
+  function renderForecastMetrics() {
+    const names = { persistence: 'Persistence (S3)', weekly_naive: 'Weekly naive (S4)', avg7: '7-day average (S5)', gbm: 'GBM (S6)', lasso: 'Lasso (S6)', ens: 'Ensemble (S6)' };
+    const fm = D.forecast_metrics || [];
+    const bestMae = Math.min(...fm.map(x => x.MAE)), bestTau = Math.max(...fm.map(x => x.kendall_tau));
+    $('fcMetricsBody').innerHTML = fm.map(x => {
+      const p = x.DM_vs_avg7_p;
+      let read = '—';
+      if (x.model === 'avg7') read = 'Reference for the DM test.';
+      else if (ok(p)) read = p < 0.05 ? (x.DM_vs_avg7_stat < 0 ? 'Significantly <b>more</b> accurate than avg7.' : 'Significantly <b>less</b> accurate than avg7.') : 'No significant difference from avg7.';
+      return `<tr>
+        <td style="font-weight:bold">${names[x.model] || x.model}</td>
+        <td class="num mono" style="${x.MAE === bestMae ? 'color:var(--G);font-weight:bold' : ''}">${num(x.MAE)}</td>
+        <td class="num mono">${num(x.RMSE)}</td>
+        <td class="num mono" style="opacity:.75">${money(x.worst_abs_error)}</td>
+        <td class="num mono" style="${x.kendall_tau === bestTau ? 'color:var(--G);font-weight:bold' : 'font-weight:bold'}">${num(x.kendall_tau, 3)}</td>
+        <td class="num mono">${num(x.MAE_pre_RTCB)}</td>
+        <td class="num mono">${num(x.MAE_post_RTCB)}</td>
+        <td class="num mono">${ok(p) ? (p < 0.001 ? '&lt;0.001' : p.toFixed(3)) : '—'}</td>
+        <td class="desc">${read}</td>
+      </tr>`;
+    }).join('');
+    const g = fm.find(x => x.model === 'gbm') || {}, ps = fm.find(x => x.model === 'persistence') || {}, e = fm.find(x => x.model === 'ens') || {};
+    $('fcTakeaway').innerHTML = `<span class="tag">What it means</span><ul>
+      <li>GBM misses by <b>${money(g.MAE, 2)}/MWh</b> on average vs ${money(ps.MAE, 2)} for persistence — ${pct(1 - g.MAE / ps.MAE, 0)} less error.</li>
+      <li>Every model's error grew after RTC+B (GBM ${num(g.MAE_pre_RTCB)} → ${num(g.MAE_post_RTCB)}), but GBM degraded least.</li>
+      <li>Even the best model can be off by over ${money(g.worst_abs_error)} in a single hour: spikes remain fundamentally hard to predict.</li>
+      <li>The ensemble's MAE (${num(e.MAE)}) is close to GBM's, but its rank accuracy τ is lower (${num(e.kendall_tau, 3)} vs ${num(g.kendall_tau, 3)}) — and so is its revenue. The battery cares about order, not dollars.</li>
+    </ul>`;
+  }
 
-    charts.rank = new Chart(ctx, {
-      type: 'scatter',
+  // ---------------------------------------------------------------------------
+  // TAB 3: Ablation & audit
+  // ---------------------------------------------------------------------------
+  const ABL_NOTES = {
+    full: 'Complete model with all fundamentals.',
+    prices_and_calendar_only: 'Only past prices + calendar: lands near the 7-day average. Fundamentals are where the edge is.',
+    no_load_forecast: 'ERCOT zonal load forecasts removed: small loss — load is partly predictable from calendar + weather.',
+    no_wind_forecast: 'Largest single loss. Wind swings drive net load and evening price spikes in Texas.',
+    no_solar_forecast: 'Solar sets the midday price trough — the battery\'s cheapest charging hours.',
+    no_net_load_features: 'Derived net-load ramps & renewable shares: mostly redundant with the raw forecasts.',
+    no_weather: 'Weather adds ~nothing once ERCOT\'s own load/wind/solar forecasts are present (they already embed it).',
+    no_actual_lags: '2-day-lagged actuals add little beyond the forecasts.',
+    PLACEBO_shuffled_fundamentals: 'Fundamentals scrambled between days: capture collapses to the price-only level.'
+  };
+  const ABL_LABEL = v => v === 'PLACEBO_shuffled_fundamentals' ? 'PLACEBO (shuffled)' : v.replace(/_/g, ' ');
+
+  function renderAblationTable() {
+    const ab = D.ablation || [];
+    const orcRev = orc.revenue_per_mw_year;
+    $('ablationTableBody').innerHTML = ab.map(a => {
+      const isPlacebo = a.variant.includes('PLACEBO'), isFull = a.variant === 'full';
+      return `<tr style="${isPlacebo ? 'background:rgba(198,40,40,0.08);' : isFull ? 'background:rgba(176,141,60,0.12);' : ''}">
+        <td style="font-weight:${isPlacebo || isFull ? 'bold' : 'normal'};${isPlacebo ? 'color:var(--R);' : isFull ? 'color:var(--brass-d);' : ''}">${ABL_LABEL(a.variant)}</td>
+        <td class="center mono">${a.features}</td>
+        <td class="num mono">${num(a.MAE)}</td>
+        <td class="num mono" style="opacity:0.7">${num(a.RMSE)}</td>
+        <td class="num mono" style="font-weight:bold">${num(a.kendall_tau, 3)}</td>
+        <td class="num mono" style="font-weight:bold">${pct(a.capture_of_oracle)}</td>
+        <td class="num mono" style="${a.capture_change_vs_full < -0.02 ? 'color:var(--R);font-weight:bold;' : ''}">${isFull ? '—' : pts(a.capture_change_vs_full)}</td>
+        <td class="num mono">${isFull ? '—' : signedMoney(a.capture_change_vs_full * orcRev)}</td>
+        <td class="desc">${ABL_NOTES[a.variant] || '—'}</td>
+      </tr>`;
+    }).join('');
+    const pco = (D.ablation || []).find(a => a.variant === 'prices_and_calendar_only') || {};
+    $('placeboText').innerHTML = `When the load, wind, solar and weather inputs are randomly shuffled between days (so they no longer match the day being forecast), capture falls from
+      <strong>${pct(ablFull.capture_of_oracle)}</strong> to <strong>${pct(placebo.capture_of_oracle)}</strong> — about the same as the 7-day average (${pct(avg7.capture_of_oracle)}) and the price-only model (${pct(pco.capture_of_oracle)}).
+      If the model were leaking future prices through some column, shuffling the fundamentals would not have hurt it. It did, so the edge comes from genuine physical information.`;
+    const top = ablDrops.slice(0, 3);
+    $('ablTakeaway').innerHTML = `<span class="tag">What it means</span><ul>
+      <li>Biggest contributors: ${top.map(a => `<b>${ABL_LABEL(a.variant).replace('no ', '')}</b> (${pts(a.capture_change_vs_full)}, ≈${money(-a.capture_change_vs_full * orcRev)}/MW-yr)`).join(', ')}.</li>
+      <li>Dropping all fundamentals (price + calendar only) costs ${pts(pco.capture_change_vs_full)} — the total value of looking at the physical grid rather than just past prices.</li>
+      <li>Individual drops add up to less than that total because the inputs overlap: removing wind still leaves net-load features that partly encode wind.</li>
+      <li>Note the MAE column: some ablations have <i>lower</i> MAE than the full model yet earn less. Again — ranking hours, not dollar accuracy, is what pays.</li>
+    </ul>`;
+  }
+
+  function renderAblationChart() {
+    const ab = (D.ablation || []).filter(a => a.variant !== 'full').slice().sort((a, b) => a.capture_change_vs_full - b.capture_change_vs_full);
+    makeChart('ablation', 'ablationChart', {
+      type: 'bar',
       data: {
+        labels: ab.map(a => ABL_LABEL(a.variant)),
         datasets: [{
-          label: 'Daily Performance (GBM)',
-          data,
-          backgroundColor: 'rgba(176, 141, 60, 0.45)',
-          borderColor: '#7d6325',
-          borderWidth: 1,
-          pointRadius: 3
+          label: 'Capture change vs full model (pts)',
+          data: ab.map(a => +(a.capture_change_vs_full * 100).toFixed(2)),
+          backgroundColor: ab.map(a => a.variant.includes('PLACEBO') ? 'rgba(198,40,40,0.7)' : a.capture_change_vs_full < -0.02 ? 'rgba(180,83,9,0.75)' : 'rgba(176,141,60,0.55)'),
+          borderColor: '#7d6325', borderWidth: 1
         }]
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false, animation: false,
+        plugins: { legend: { display: false }, tooltip: Object.assign({}, tooltipCfg, { callbacks: { label: c => `${c.parsed.x.toFixed(2)} pts of capture` } }) },
         scales: {
-          x: {
-            grid: { color: 'rgba(0,0,0,0.06)' },
-            ticks: { font: { family: 'ui-monospace, Consolas', size: 10 }, color: '#574c38' },
-            title: { display: true, text: "Daily Kendall's τ (Forecast vs Actual)", font: { size: 11 } }
-          },
-          y: {
-            min: 40,
-            max: 102,
-            grid: { color: 'rgba(0,0,0,0.06)' },
-            ticks: { font: { family: 'ui-monospace, Consolas', size: 10 }, color: '#574c38', callback: v => `${v}%` },
-            title: { display: true, text: 'Realized Capture of Oracle (%)', font: { size: 11 } }
-          }
+          x: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: axisTicks({ callback: v => `${v} pts` }), title: axisTitle('Capture lost when this information is removed (percentage points)') },
+          y: { grid: { display: false }, ticks: axisTicks({ font: { family: MONO, size: 11 }, color: INK }) }
         }
       }
     });
   }
 
-  function renderSitingChart() {
-    const ctx = document.getElementById('sitingChart');
-    if (!ctx || !D.siting_pivot) return;
-    if (charts.siting) charts.siting.destroy();
+  function renderAudit() {
+    $('auditTableBody').innerHTML = (D.audit || []).map(a => `
+      <tr>
+        <td class="mono" style="font-weight:bold;color:var(--brass-d)">${a.dataset.replace('_asof', '').replace(/_/g, ' ')}</td>
+        <td class="mono">${a.target_day}</td>
+        <td class="mono">${a.publish_local}</td>
+        <td class="mono" style="opacity:0.75">${a.cutoff_local}</td>
+        <td class="num mono" style="color:var(--G);font-weight:bold">${Math.round(a.hours_before_cutoff * 60)} min</td>
+        <td class="center">${a.hours_before_cutoff > 0 ? '<span class="pill ok">Before cutoff</span>' : '<span class="pill warn">LATE</span>'}</td>
+      </tr>`).join('');
+  }
 
-    const hubs = ['HB_WEST', 'HB_PAN', 'HB_NORTH', 'HB_BUSAVG', 'HB_HOUSTON', 'HB_SOUTH'];
-    const p = D.siting_pivot;
+  // ---------------------------------------------------------------------------
+  // TAB 4: Hypotheses
+  // ---------------------------------------------------------------------------
+  function renderCorrTable() {
+    const r = D.rank_scatter || [];
+    const reg = r.map(x => x.regret);
+    const rows = [['tau', 'Kendall τ'], ['mae', 'MAE'], ['rmse', 'RMSE']].map(([k, l]) => ({ k, l, sp: spearman(r.map(x => x[k]), reg), pe: pearson(r.map(x => x[k]), reg) }));
+    const T = rows[0], M = rows[1];
+    $('corrBody').innerHTML = rows.map(x => `<tr>
+      <td style="font-weight:bold">${x.l}</td>
+      <td class="num mono" style="font-weight:bold;${Math.abs(x.sp) === Math.max(...rows.map(y => Math.abs(y.sp))) ? 'color:var(--G)' : ''}">${x.sp.toFixed(3)}</td>
+      <td class="num mono" style="${Math.abs(x.pe) === Math.max(...rows.map(y => Math.abs(y.pe))) ? 'color:var(--G);font-weight:bold' : ''}">${x.pe.toFixed(3)}</td>
+      <td class="desc">${x.k === 'tau' ? 'Negative = better ordering → less money lost.' : 'Positive = bigger errors → more money lost.'}</td>
+    </tr>`).join('');
+    $('h2Takeaway').innerHTML = `<span class="tag">Verdict — supported, with a caveat</span><ul>
+      <li><b>Rank view (Spearman):</b> |ρ(τ)| = ${Math.abs(T.sp).toFixed(3)} beats |ρ(MAE)| = ${Math.abs(M.sp).toFixed(3)}. On a typical day, whether the hours are in the right order tells you more about lost revenue than the dollar error. <b>H2 holds.</b></li>
+      <li><b>Dollar view (Pearson):</b> the picture flips — r(MAE) = ${M.pe.toFixed(3)} vs r(τ) = ${T.pe.toFixed(3)}. A few spike days with huge errors <i>and</i> huge regret dominate a linear correlation.</li>
+      <li><b>Practical meaning:</b> train and select models on rank quality for normal days, but invest separately in getting spike days right — that's where the big dollars are (see H3).</li>
+    </ul>`;
+  }
 
-    charts.siting = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: hubs,
-        datasets: [
-          {
-            label: 'ORACLE Upper Bound',
-            data: hubs.map(h => p[h] ? p[h].ORACLE : 0),
-            backgroundColor: 'rgba(125, 99, 37, 0.3)',
-            borderColor: '#7d6325',
-            borderWidth: 1
-          },
-          {
-            label: 'S5 7-Day Average Opt',
-            data: hubs.map(h => p[h] ? p[h].S5_avg7_opt : 0),
-            backgroundColor: 'rgba(46, 125, 50, 0.7)',
-            borderColor: '#2e7d32',
-            borderWidth: 1
-          },
-          {
-            label: 'S3 Persistence Opt',
-            data: hubs.map(h => p[h] ? p[h].S3_persistence_opt : 0),
-            backgroundColor: 'rgba(180, 83, 9, 0.7)',
-            borderColor: '#b45309',
-            borderWidth: 1
-          },
-          {
-            label: 'S1 Fixed Windows',
-            data: hubs.map(h => p[h] ? p[h].S1_fixed_windows : 0),
-            backgroundColor: 'rgba(87, 76, 56, 0.5)',
-            borderColor: '#574c38',
-            borderWidth: 1
-          }
-        ]
-      },
+  function renderRank() {
+    const xk = $('rankX').value, yk = $('rankY').value, reg = $('rankRegime').value;
+    const daily = D.daily || [];
+    const regimeOf = {};
+    daily.forEach(d => { regimeOf[d.date] = d.regime; });
+    const pts_ = (D.rank_scatter || []).filter(p => reg === 'all' || regimeOf[p.date] === reg);
+    const yv = p => yk === 'capture' ? p.capture * 100 : Math.max(1, p.regret);  // log axis: floor $0 days at $1
+    const mk = rg => pts_.filter(p => regimeOf[p.date] === rg).map(p => ({ x: p[xk], y: yv(p), date: p.date }));
+    const sp = spearman(pts_.map(p => p[xk]), pts_.map(yv));
+    const xLbl = { tau: "Daily Kendall's τ (forecast vs actual)", mae: 'Daily MAE ($/MWh)', rmse: 'Daily RMSE ($/MWh)' }[xk];
+    const yLbl = yk === 'capture' ? 'Realized capture of Oracle (%)' : 'Daily regret ($)';
+    makeChart('rank', 'rankChart', {
+      type: 'scatter',
+      data: { datasets: [
+        { label: `Before RTC+B (${mk('pre_RTCB').length} days)`, data: mk('pre_RTCB'), backgroundColor: 'rgba(176,141,60,0.45)', borderColor: '#7d6325', borderWidth: 1, pointRadius: 3 },
+        { label: `After RTC+B (${mk('post_RTCB').length} days)`, data: mk('post_RTCB'), backgroundColor: 'rgba(30,107,196,0.35)', borderColor: '#1e6bc4', borderWidth: 1, pointRadius: 3 }
+      ] },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
+        responsive: true, maintainAspectRatio: false, animation: false,
         plugins: {
-          legend: {
-            display: true,
-            labels: { font: { family: 'ui-monospace, Consolas', size: 10 }, color: '#2b2417', boxWidth: 12 }
-          }
+          legend: legendCfg,
+          title: { display: true, text: `Spearman ρ = ${sp.toFixed(3)}  (n = ${pts_.length})`, font: { family: MONO, size: 12 }, color: INK },
+          tooltip: Object.assign({}, tooltipCfg, { callbacks: { label: c => `${c.raw.date}: x=${c.raw.x.toFixed(3)}, ${yk === 'capture' ? c.raw.y.toFixed(1) + '%' : money(c.raw.y)}` } })
         },
         scales: {
-          x: {
-            grid: { display: false },
-            ticks: { font: { family: 'ui-monospace, Consolas', size: 11, weight: 'bold' }, color: '#2b2417' }
-          },
-          y: {
-            grid: { color: 'rgba(0,0,0,0.06)' },
-            ticks: {
-              font: { family: 'ui-monospace, Consolas', size: 10 },
-              color: '#574c38',
-              callback: v => `$${Math.round(v/1000)}k`
-            },
-            title: { display: true, text: 'Revenue ($/MW-year)', font: { size: 10 } }
-          }
+          x: { type: (xk !== 'tau') ? 'logarithmic' : 'linear', grid: { color: 'rgba(0,0,0,0.06)' }, ticks: axisTicks(), title: axisTitle(xLbl + (xk !== 'tau' ? ' — log scale' : '')) },
+          y: { type: yk === 'regret' ? 'logarithmic' : 'linear', grid: { color: 'rgba(0,0,0,0.06)' }, ticks: axisTicks({ callback: v => yk === 'capture' ? `${v}%` : (Number.isInteger(Math.log10(v)) ? money(v) : '') }), title: axisTitle(yLbl + (yk === 'regret' ? ' — log scale' : '')) }
         }
       }
     });
   }
 
-  function roundTo(v, dec) {
-    return Number(Math.round(v + 'e' + dec) + 'e-' + dec);
+  function lorenzData(k) {
+    const reg = (D.daily || []).map(d => Math.max(0, d.ORACLE - d[k])).sort((a, b) => b - a);
+    const tot = sum(reg);
+    let c = 0;
+    const pts_ = [{ x: 0, y: 0 }];
+    reg.forEach((v, i) => { c += v; pts_.push({ x: (i + 1) / reg.length * 100, y: tot > 0 ? c / tot * 100 : 0 }); });
+    return { pts: pts_, tot, n: reg.length, reg };
   }
 
-  window.addEventListener('DOMContentLoaded', () => {
-    populateTables();
-    runSimulation();
-  });
+  function renderLorenz() {
+    const k = $('lorenzStrat').value, p = +$('lorenzPct').value;
+    $('lorenzPctLbl').textContent = `${p}%`;
+    const L = lorenzData(k);
+    const cutIdx = Math.max(1, Math.round(L.n * p / 100));
+    const share = L.pts[cutIdx].y;
+    makeChart('lorenz', 'lorenzChart', {
+      type: 'scatter',
+      data: { datasets: [
+        { label: 'Even spread', data: [{ x: 0, y: 0 }, { x: 100, y: 100 }], showLine: true, borderColor: '#9e9480', borderDash: [4, 4], borderWidth: 1, pointRadius: 0 },
+        { label: S[k].short, data: L.pts, showLine: true, borderColor: S[k].color, borderWidth: 2.2, pointRadius: 0 },
+        { label: `Worst ${p}% of days`, data: [{ x: L.pts[cutIdx].x, y: share }], pointRadius: 6, pointBackgroundColor: '#c62828', borderColor: '#fff', borderWidth: 1.5 }
+      ] },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: false,
+        plugins: { legend: legendCfg, tooltip: Object.assign({}, tooltipCfg, { callbacks: { label: c => `${c.parsed.x.toFixed(1)}% of days → ${c.parsed.y.toFixed(1)}% of regret` } }) },
+        scales: {
+          x: { min: 0, max: 100, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: axisTicks({ callback: v => `${v}%` }), title: axisTitle('Share of days (worst first)') },
+          y: { min: 0, max: 100, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: axisTicks({ callback: v => `${v}%` }), title: axisTitle('Share of total regret') }
+        }
+      }
+    });
+    const g = byStrat(D.gap, k);
+    $('h3Table').innerHTML = `
+      <tr><td>Total regret over ${L.n} days (100 MW)</td><td class="num mono" style="font-weight:bold">${money(L.tot)}</td></tr>
+      <tr><td>Share from the worst ${p}% of days (${cutIdx} days)</td><td class="num mono" style="font-weight:bold;color:var(--R)">${share.toFixed(1)}%</td></tr>
+      <tr><td>Share from the 10 worst days</td><td class="num mono" style="font-weight:bold;color:var(--R)">${pct(g.share_of_regret_from_10_worst_days)}</td></tr>
+      <tr><td>Share on the 10% most valuable (Oracle) days</td><td class="num mono" style="font-weight:bold;color:var(--amber)">${pct(g.share_of_regret_on_top_decile_oracle_days)}</td></tr>
+      <tr><td>Median daily regret</td><td class="num mono">${money(L.reg[Math.floor(L.n / 2)])}</td></tr>
+      <tr><td>Days that beat the Oracle</td><td class="num mono" style="color:var(--G)">${ok(g.days_beating_oracle) ? g.days_beating_oracle : 0} (sanity check)</td></tr>`;
+    const conc = share / p;
+    $('h3Takeaway').innerHTML = `<span class="tag">What it means</span>The worst ${p}% of days cause ${share.toFixed(0)}% of the lost money — <b>${conc.toFixed(1)}×</b> their fair share.
+      ${conc > 2.5 ? '<b>H3 holds:</b> the gap to perfect foresight is mostly a few spike days, not small daily misses.' : 'Losses are only moderately concentrated for this strategy.'}
+      Improving forecasts on ordinary days has limited upside; anticipating scarcity events is where the remaining value lies. Compare strategies: better models have <i>more</i> concentrated regret, because they've already fixed the ordinary days.`;
+  }
+
+  function renderRtcb() {
+    const ks = ['S6_gbm_opt', 'S6_ens_opt', 'S5_avg7_opt', 'S3_persistence_opt', 'S4_weekly_naive_opt', 'S6_lasso_opt', 'S2_yesterday_rule', 'S1_fixed_windows'];
+    const rows = ks.map(k => ({ k, pre: byStrat(N, k).capture_pre_rtcb, post: byStrat(N, k).capture_post_rtcb }));
+    $('h4Body').innerHTML = rows.map(r => `<tr>
+      <td style="font-weight:bold;color:${S[r.k].color}">${S[r.k].short}</td>
+      <td class="num mono">${pct(r.pre)}</td>
+      <td class="num mono" style="font-weight:bold">${pct(r.post)}</td>
+      <td class="num mono" style="${r.post < r.pre ? 'color:var(--R)' : 'color:var(--G)'};font-weight:bold">${pts(r.post - r.pre)}</td>
+    </tr>`).join('');
+    makeChart('rtcb', 'rtcbChart', {
+      type: 'bar',
+      data: { labels: rows.map(r => S[r.k].short), datasets: [
+        { label: 'Before 5 Dec 2025', data: rows.map(r => +(r.pre * 100).toFixed(1)), backgroundColor: 'rgba(176,141,60,0.6)', borderColor: '#7d6325', borderWidth: 1 },
+        { label: 'After (RTC+B)', data: rows.map(r => +(r.post * 100).toFixed(1)), backgroundColor: 'rgba(30,107,196,0.6)', borderColor: '#1e6bc4', borderWidth: 1 }
+      ] },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: false,
+        plugins: { legend: legendCfg, tooltip: tooltipCfg },
+        scales: {
+          x: { grid: { display: false }, ticks: axisTicks({ maxRotation: 45, minRotation: 0 }) },
+          y: { min: 40, max: 100, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: axisTicks({ callback: v => `${v}%` }), title: axisTitle('Capture of Oracle') }
+        }
+      }
+    });
+    const up = rows.filter(r => r.post > r.pre);
+    const worst = rows.reduce((w, r) => (r.post - r.pre) < (w.post - w.pre) ? r : w, rows[0]);
+    const g = rows[0];
+    $('h4Takeaway').innerHTML = `<span class="tag">What it means</span><ul>
+      <li>${rows.length - up.length} of ${rows.length} strategies capture less after RTC+B. GBM drops ${pts(g.post - g.pre)} but stays the best by a wide margin.</li>
+      <li>Biggest drop: <b>${worst.k ? S[worst.k].short : '—'}</b> (${pts(worst.post - worst.pre)}). Forecasts that copy past price patterns lose most: post-RTC+B daily price shapes repeat less reliably.</li>
+      ${up.length ? `<li>Exception: ${up.map(r => S[r.k].short).join(', ')} improved — clock-based windows happen to line up better with the new price shape (cheap midday solar, evening peak).</li>` : ''}
+      <li>Caveat: only ${(D.daily || []).filter(d => d.regime === 'post_RTCB').length} post-RTC+B days, and they're a different season mix, so part of this shift could be seasonal rather than the market change.</li>
+    </ul>`;
+  }
+
+  function renderVoc() {
+    const voc = D.voc || [];
+    const noise = voc.filter(v => !v.noise_sigma.startsWith('blend')).map(v => ({ x: +v.noise_sigma, y: v.capture * 100 }));
+    const blend = voc.filter(v => v.noise_sigma.startsWith('blend')).map(v => ({ x: +v.noise_sigma.split('_').pop() * 100, y: v.capture * 100 }));
+    const sigma = +$('vocSlider').value;
+    $('vocLbl').textContent = `$${sigma}/MWh`;
+    // linear interpolation on the measured noise curve
+    let cap = noise.length ? noise[noise.length - 1].y : NaN;
+    for (let i = 0; i < noise.length - 1; i++) {
+      if (sigma >= noise[i].x && sigma <= noise[i + 1].x) {
+        const f = (sigma - noise[i].x) / (noise[i + 1].x - noise[i].x);
+        cap = noise[i].y + f * (noise[i + 1].y - noise[i].y);
+        break;
+      }
+    }
+    const allNorth = (D.summary_all || []).find(x => x.hub === 'HB_NORTH' && x.strategy === 'ORACLE') || {};
+    const orRev = allNorth.revenue_per_mw_year || orc.revenue_per_mw_year;
+    $('vocCap').innerHTML = `<span class="cut-num">${cap.toFixed(1)}%</span>`;
+    $('vocRev').textContent = `≈ ${money(cap / 100 * orRev)}/MW-yr · ${money((1 - cap / 100) * orRev)} lost to noise`;
+    makeChart('voc', 'vocChart', {
+      type: 'scatter',
+      data: { datasets: [
+        { label: 'Truth + random noise σ', data: noise, showLine: true, borderColor: '#b08d3c', backgroundColor: '#b08d3c', borderWidth: 2.2, pointRadius: 3, xAxisID: 'x' },
+        { label: 'Your σ', data: [{ x: Math.max(sigma, 1), y: cap }], pointRadius: 7, pointBackgroundColor: '#c62828', borderColor: '#fff', borderWidth: 1.5, xAxisID: 'x' },
+        { label: 'Truth blended with persistence (% top axis)', data: blend.concat([{ x: 0, y: 100 }]).sort((a, b) => a.x - b.x), showLine: true, borderColor: '#b45309', borderDash: [4, 3], borderWidth: 1.6, pointRadius: 3, xAxisID: 'xb' }
+      ] },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: false,
+        plugins: { legend: legendCfg, tooltip: Object.assign({}, tooltipCfg, { callbacks: { label: c => c.dataset.xAxisID === 'xb' ? `${c.parsed.x}% persistence → ${c.parsed.y.toFixed(1)}%` : `σ=$${c.parsed.x} → ${c.parsed.y.toFixed(1)}%` } }) },
+        scales: {
+          x: { type: 'logarithmic', min: 1, max: 200, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: axisTicks({ callback: v => [1, 2, 5, 10, 20, 40, 80, 160].includes(v) ? `$${v}` : '' }), title: axisTitle('Noise σ ($/MWh, log scale)') },
+          xb: { type: 'linear', position: 'top', min: 0, max: 100, grid: { display: false }, ticks: axisTicks({ color: '#b45309', callback: v => `${v}%` }), title: axisTitle('Persistence blend weight') },
+          y: { min: 25, max: 100, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: axisTicks({ callback: v => `${v}%` }), title: axisTitle('Capture of Oracle') }
+        }
+      }
+    });
+    const n10 = noise.find(v => v.x === 10), n20 = noise.find(v => v.x === 20);
+    $('vocTakeaway').innerHTML = `<span class="tag">What it means</span>Even modest noise is expensive: σ = $10 already costs ${n10 ? (100 - n10.y).toFixed(0) : '—'}% of revenue, σ = $20 costs ${n20 ? (100 - n20.y).toFixed(0) : '—'}%.
+      Random noise scrambles the <i>order</i> of hours, which is exactly what the optimizer relies on. Real forecast errors are not random (they're correlated across hours), which is why GBM's ${money(((D.forecast_metrics || []).find(x => x.model === 'gbm') || {}).MAE, 2)} MAE still yields ${pct(gbm.capture_of_oracle, 0)}.`;
+  }
+
+  function bindHyp() {
+    ['rankX', 'rankY', 'rankRegime'].forEach(id => $(id).addEventListener('change', renderRank));
+    const sel = $('lorenzStrat');
+    sel.innerHTML = ['S6_gbm_opt', 'S6_ens_opt', 'S5_avg7_opt', 'S3_persistence_opt', 'S4_weekly_naive_opt', 'S6_lasso_opt', 'S2_yesterday_rule', 'S1_fixed_windows']
+      .map(k => `<option value="${k}">${S[k].name}</option>`).join('');
+    sel.addEventListener('change', renderLorenz);
+    $('lorenzPct').addEventListener('input', renderLorenz);
+    $('vocSlider').addEventListener('input', renderVoc);
+  }
+
+  // ---------------------------------------------------------------------------
+  // TAB 5: Siting & sizing
+  // ---------------------------------------------------------------------------
+  let sitingMetric = 'rev';
+  let sitingSort = { k: 'ORACLE', dir: -1 };
+  const SIT_STRATS = ['ORACLE', 'S5_avg7_opt', 'S3_persistence_opt', 'S1_fixed_windows'];
+
+  function sitingRows() {
+    const p = D.siting_pivot || {}, c = D.siting_capture || {};
+    return HUBS.filter(h => p[h]).map(h => {
+      const real = ['S5_avg7_opt', 'S3_persistence_opt', 'S4_weekly_naive_opt', 'S1_fixed_windows', 'S2_yesterday_rule'];
+      const best = real.reduce((b, k) => p[h][k] > p[h][b] ? k : b, real[0]);
+      return { hub: h, ...p[h], best, cap: c[h][best], gap: p[h].ORACLE - p[h][best] };
+    });
+  }
+
+  function renderSiting() {
+    const rows = sitingRows();
+    const days = ((D.summary_all || [])[0] || {}).days;
+    if (days) $('sitingDays').textContent = days.toLocaleString();
+    const sorted = rows.slice().sort((a, b) => {
+      const k = sitingSort.k;
+      return (typeof a[k] === 'string' ? a[k].localeCompare(b[k]) : a[k] - b[k]) * sitingSort.dir;
+    });
+    const maxO = Math.max(...rows.map(r => r.ORACLE)), maxGap = Math.max(...rows.map(r => r.gap)), maxCap = Math.max(...rows.map(r => r.cap));
+    $('sitingBody').innerHTML = sorted.map(r => `<tr>
+      <td><b>${r.hub}</b></td>
+      <td class="num mono" style="${r.ORACLE === maxO ? 'font-weight:bold;color:var(--G)' : ''}">${money(r.ORACLE)}</td>
+      <td class="num mono">${money(r.S5_avg7_opt)}</td>
+      <td class="num mono">${money(r.S3_persistence_opt)}</td>
+      <td class="num mono">${money(r.S1_fixed_windows)}</td>
+      <td class="num mono" style="${r.cap === maxCap ? 'font-weight:bold;color:var(--G)' : ''}">${pct(r.cap)}</td>
+      <td class="num mono" style="${r.gap === maxGap ? 'font-weight:bold;color:var(--amber)' : ''}">${money(r.gap)}</td>
+      <td class="desc">${HUB_NOTES[r.hub] || ''}</td>
+    </tr>`).join('');
+    document.querySelectorAll('#sitingTable th.sortable').forEach(th => {
+      th.textContent = th.textContent.replace(/ [▲▼]$/, '') + (th.dataset.k === sitingSort.k ? (sitingSort.dir < 0 ? ' ▼' : ' ▲') : '');
+    });
+
+    const byO = rows.slice().sort((a, b) => b.ORACLE - a.ORACLE), byReal = rows.slice().sort((a, b) => b[b.best] - a[a.best]);
+    const byGap = rows.slice().sort((a, b) => b.gap - a.gap), byCap = rows.slice().sort((a, b) => b.cap - a.cap);
+    const pan = rows.find(r => r.hub === 'HB_PAN');
+    $('sitingTakeaway').innerHTML = `<span class="tag">What it means</span><ul>
+      <li><b>${byO[0].hub}</b> has the most potential (${money(byO[0].ORACLE)}/MW-yr) and also earns the most with a realistic forecast (${money(byReal[0][byReal[0].best])}). It wins on both counts.</li>
+      <li>The spread between best and worst hub is ${money(byO[0].ORACLE - byO[byO.length - 1].ORACLE)}/MW-yr — ${pct((byO[0].ORACLE - byO[byO.length - 1].ORACLE) / byO[byO.length - 1].ORACLE, 0)} more, for the same hardware. Siting is a first-order decision.</li>
+      ${pan ? `<li><b>HB_PAN</b> is the trap: #${byO.indexOf(pan) + 1} in potential but #${byCap.indexOf(pan) + 1} of ${rows.length} in capture (${pct(pan.cap)}). Its prices are erratic, so simple forecasts miss most of the value — it's the hub where a better forecast pays most (${money(pan.gap)} left on the table).</li>` : ''}
+      <li>Simple forecasts capture most at ${byCap[0].hub} (${pct(byCap[0].cap)}): calmer, more repetitive daily price shapes.</li>
+    </ul>`;
+
+    const p = D.siting_pivot || {}, c = D.siting_capture || {};
+    const isRev = sitingMetric === 'rev';
+    const hubsSorted = byO.map(r => r.hub);
+    const colors = { ORACLE: ['rgba(125,99,37,0.3)', '#7d6325'], S5_avg7_opt: ['rgba(46,125,50,0.7)', '#2e7d32'], S3_persistence_opt: ['rgba(180,83,9,0.7)', '#b45309'], S1_fixed_windows: ['rgba(87,76,56,0.5)', '#574c38'] };
+    makeChart('siting', 'sitingChart', {
+      type: 'bar',
+      data: {
+        labels: hubsSorted,
+        datasets: SIT_STRATS.filter(k => isRev || k !== 'ORACLE').map(k => ({
+          label: S[k].name.replace(' (Perfect Foresight)', ' Upper Bound'),
+          data: hubsSorted.map(h => isRev ? p[h][k] : +(c[h][k] * 100).toFixed(1)),
+          backgroundColor: colors[k][0], borderColor: colors[k][1], borderWidth: 1
+        }))
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: false,
+        plugins: { legend: Object.assign({}, legendCfg, { labels: Object.assign({}, legendCfg.labels, { font: { family: MONO, size: 10 } }) }),
+          tooltip: Object.assign({}, tooltipCfg, { callbacks: { label: c2 => `${c2.dataset.label}: ${isRev ? money(c2.parsed.y) + '/MW-yr' : c2.parsed.y + '%'}` } }) },
+        scales: {
+          x: { grid: { display: false }, ticks: axisTicks({ font: { family: MONO, size: 11, weight: 'bold' }, color: INK }) },
+          y: { min: isRev ? 0 : 40, max: isRev ? undefined : 100, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: axisTicks({ callback: v => isRev ? `$${Math.round(v / 1000)}k` : `${v}%` }), title: axisTitle(isRev ? 'Revenue ($/MW-year)' : 'Capture of Oracle (%)') }
+        }
+      }
+    });
+  }
+
+  function bindSiting() {
+    $('sitingMetricBtns').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+      sitingMetric = b.dataset.m;
+      $('sitingMetricBtns').querySelectorAll('button').forEach(x => { x.className = x.dataset.m === sitingMetric ? '' : 'ghost'; });
+      renderSiting();
+    }));
+    document.querySelectorAll('#sitingTable th.sortable').forEach(th => th.addEventListener('click', () => {
+      const k = th.dataset.k;
+      sitingSort = { k, dir: sitingSort.k === k ? -sitingSort.dir : (k === 'hub' ? 1 : -1) };
+      renderSiting();
+    }));
+  }
+
+  function renderSizing() {
+    const two = (D.summary_all || []).filter(x => x.hub === 'HB_NORTH'), four = D.summary_4h || [];
+    const ks = ['ORACLE', 'S5_avg7_opt', 'S3_persistence_opt', 'S4_weekly_naive_opt', 'S2_yesterday_rule', 'S1_fixed_windows'];
+    $('sizingBody').innerHTML = ks.map(k => {
+      const a = byStrat(two, k), b = byStrat(four, k);
+      return `<tr>
+        <td style="font-weight:bold;color:${S[k].color}">${S[k].short}</td>
+        <td class="num mono">${money(a.revenue_per_mw_year)}</td>
+        <td class="num mono" style="font-weight:bold">${money(b.revenue_per_mw_year)}</td>
+        <td class="num mono">${money(a.revenue_per_mw_year / 2)}</td>
+        <td class="num mono">${money(b.revenue_per_mw_year / 4)}</td>
+        <td class="num mono">${pct(a.capture_of_oracle)}</td>
+        <td class="num mono">${pct(b.capture_of_oracle)}</td>
+      </tr>`;
+    }).join('');
+    const a = byStrat(two, 'ORACLE'), b = byStrat(four, 'ORACLE'), a5 = byStrat(two, 'S5_avg7_opt'), b5 = byStrat(four, 'S5_avg7_opt');
+    $('sizingTakeaway').innerHTML = `<span class="tag">What it means</span><ul>
+      <li>Doubling storage hours raises revenue per MW by ${pct(b.revenue_per_mw_year / a.revenue_per_mw_year - 1, 0)} (Oracle) — far from double. The 3rd and 4th hours are sold into less extreme prices.</li>
+      <li>Per MWh of storage, the 4h battery earns ${money(b.revenue_per_mw_year / 4)} vs ${money(a.revenue_per_mw_year / 2)}: each MWh of cells is worth ${pct(1 - (b.revenue_per_mw_year / 4) / (a.revenue_per_mw_year / 2), 0)} less. Whether 4h pays off depends on how much cheaper extra cells are than extra inverter MW.</li>
+      <li>Forecast capture is about the same (${pct(a5.capture_of_oracle)} vs ${pct(b5.capture_of_oracle)} for the 7-day average): forecast quality matters about equally for both sizes, so the ML gains should carry over to a 4h battery.</li>
+    </ul>`;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Init
+  // ---------------------------------------------------------------------------
+  function init() {
+    if (!D.summary_hb_north) {
+      $('kpiRow').innerHTML = '<div class="kpi-card" style="grid-column:1/-1">data.js failed to load — open this page from the project folder.</div>';
+      return;
+    }
+    initTerms();
+    renderKpis();
+    renderStart();
+    populateDates();
+    bindSim();
+    renderBacktestTable();
+    renderChips();
+    bindBacktest();
+    renderForecastMetrics();
+    renderAblationTable();
+    renderAudit();
+    bindHyp();
+    renderCorrTable();
+    bindSiting();
+    renderSizing();
+    const hash = (location.hash || '').slice(1);
+    showTab(document.getElementById('tab-' + hash) ? hash : 'start');
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 })();
 </script>
 </body>
