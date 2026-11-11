@@ -13,7 +13,7 @@ actual system data, weather) and prove that the data is complete and leak-free *
 
 The file has seven numbered sections. Read them in order.
 
-### Section 1: CONFIG (lines ~55–195)
+### Section 1: CONFIG (lines ~60–180)
 
 This is the only part you are meant to edit.
 
