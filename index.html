@@ -676,6 +676,7 @@ dl.gloss dd { font-size: 13px; }
             <li><b>Hub prices, day-ahead only:</b> no nodal congestion, no real-time market, no ancillary services (which are a large share of real Texas battery revenue).</li>
             <li><b>Each day stands alone:</b> the battery starts and ends every day empty, and is capped at 1 full cycle per day.</li>
             <li><b>ML models were trained for HB_NORTH only.</b> Other hubs are compared using the simple-rule strategies.</li>
+            <li><b>Negative-price hours:</b> the optimizer was allowed to charge and discharge in the same hour (a handful of solves per hub), which slightly flatters revenue on negative-price days.</li>
           </ul>
         </div>
         <div class="explain" style="margin:0">
@@ -1847,7 +1848,7 @@ dl.gloss dd { font-size: 13px; }
     $('ablTakeaway').innerHTML = `<span class="tag">What it means</span><ul>
       <li>Biggest contributors: ${top.map(a => `<b>${ABL_LABEL(a.variant).replace('no ', '')}</b> (${pts(a.capture_change_vs_full)}, ≈${money(-a.capture_change_vs_full * orcRev)}/MW-yr)`).join(', ')}.</li>
       <li>Dropping all fundamentals (price + calendar only) costs ${pts(pco.capture_change_vs_full)} — the total value of looking at the physical grid rather than just past prices.</li>
-      <li>Individual drops add up to less than that total because the inputs overlap: removing wind still leaves net-load features that partly encode wind.</li>
+      <li>Individual drops add up to less than that total because the inputs overlap: with the wind forecast removed, the model still sees 48 h weather forecasts of 100 m wind speed and wind output from 2 days earlier.</li>
       <li>Note the MAE column: some ablations have <i>lower</i> MAE than the full model yet earn less. Again — ranking hours, not dollar accuracy, is what pays.</li>
     </ul>`;
   }
